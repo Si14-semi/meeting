@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+// 반복 주기 (구글캘린더 동일 컨셉)
+enum Frequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+// 월간 반복 방식: 매월 같은 날짜(예: 15일) vs 매월 n번째 요일(예: 셋째 화요일)
+enum MonthlyMode {
+  DAY_OF_MONTH
+  NTH_WEEKDAY
+}
+
+model User {
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  name               String
+  passwordHash       String
+  role               Role     @default(USER)
+  mustChangePassword Boolean  @default(false)
+  createdAt          DateTime @default(now())
+
+  reservations Reservation[]
+  series       RecurringSeries[]
+  auditLogs    AuditLog[]
+
+  @@map("users")
+}
+
+model Room {
+  id        Int     @id @default(autoincrement())
+  number    String  @unique // 예: "120"
+  floor     Int // 예: 12, 13
+  capacity  Int?
+  equipment String? // 예: "모니터, 화이트보드"
+  sortOrder Int     @default(0)
+  active    Boolean @default(true)
+
+  reservations Reservation[]
+
+  @@map("rooms")
+}
+
+model RecurringSeries {
+  id          String       @id @default(cuid())
+  userId      String
+  frequency   Frequency
+  interval    Int          @default(1) // n일/주/개월/년 마다
+  weekdays    Int[]        @default([]) // WEEKLY용: 0(일)~6(토)
+  monthlyMode MonthlyMode? // MONTHLY용
+  startDate   String // "YYYY-MM-DD" (KST)
+  endDate     String? // 종료일 (미지정 시 시작일+1년으로 전개)
+  count       Int? // 종료 횟수
+  createdAt   DateTime     @default(now())
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reservations Reservation[]
+
+  @@map("recurring_series")
+}
+
+model Reservation {
+  id        String   @id @default(cuid())
+  roomId    Int
+  userId    String
+  date      String // "YYYY-MM-DD" (KST) — 예약은 하루를 넘을 수 없음
+  startMin  Int // 00:00 기준 분 (480 = 08:00)
+  endMin    Int // exclusive (1140 = 19:00)
+  purpose   String   @default("")
+  seriesId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  room   Room             @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  series RecurringSeries? @relation(fields: [seriesId], references: [id], onDelete: SetNull)
+
+  @@index([date])
+  @@index([userId, date])
+  @@index([seriesId])
+  @@map("reservations")
+}
+
+model Holiday {
+  date String @id // "YYYY-MM-DD"
+  name String
+
+  @@map("holidays")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  action    String // FORCE_CANCEL / FORCE_UPDATE / RESET_PASSWORD / DELETE_USER / ...
+  detail    Json // 대상 예약/회원 스냅샷
+  createdAt DateTime @default(now())
+
+  admin User @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@map("audit_logs")
+}
