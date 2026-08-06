@@ -20,7 +20,7 @@ import { colorForRoom } from "@/components/board/palette";
 import { useTheme } from "@/components/theme";
 import type { Me, ReservationDTO, Room } from "@/components/board/types";
 import { OPEN_MIN, CLOSE_MIN, SLOT_MIN, SLOTS_PER_DAY, minToLabel } from "@/lib/time";
-import { Pencil, Repeat } from "lucide-react";
+import { Repeat } from "lucide-react";
 
 const GUTTER_W = 56; // 시간 눈금 열 너비
 const EDGE_PX = 8; // 블록 상/하단 스트레치 감지 영역
@@ -601,20 +601,13 @@ function ReservationBlock({
         onDoubleClick();
       }}
     >
-      {/* 내 예약 표시: 좌측 accent 스트라이프 + 우상단 연필(편집 가능) — 사용자 확정 */}
+      {/* 내 예약 표시: 좌측 스트라이프 (라이트=보라 / 다크=크림, .mine-stripe) */}
       {mine && (
-        <>
-          <span aria-hidden className="absolute left-0 inset-y-0 w-[3px] bg-accent rounded-l-[5px]" />
-          <Pencil
-            aria-hidden
-            size={slotHeight < 24 ? 8 : 10}
-            className="absolute top-1 right-1 text-accent opacity-90"
-          />
-        </>
+        <span aria-hidden className="mine-stripe absolute left-0 inset-y-0 w-[3px] rounded-l-[5px]" />
       )}
       {/* 표기 규칙 (사용자 확정): 15분=이름만 / 30분=이름·목적 / 45분+=이름·목적·시간
           — 생략된 정보는 hover(title)로 확인 */}
-      <div className="leading-tight" style={mine ? { paddingRight: 12 } : undefined}>
+      <div className="leading-tight">
         <span className={cn("font-bold flex items-center gap-0.5 truncate", dense ? "text-[11px]" : "text-[12px]")}>
           {r.userName}
           {r.isRecurring && <Repeat size={dense ? 9 : 10} className="shrink-0 opacity-70" />}

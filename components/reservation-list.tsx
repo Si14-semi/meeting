@@ -3,12 +3,12 @@
 // 예약 목록 카드 — 내 예약 / 검색 결과 공용.
 // 클릭=선택(재클릭 해제), Ctrl(Cmd)+클릭=다중 선택, 더블클릭=수정,
 // 이동 아이콘=예약 현황에서 해당 예약 보기.
-// 내 예약은 좌측 accent 스트라이프 + 우상단 연필(편집 가능 표시)로 구분.
+// 내 예약은 좌측 스트라이프(라이트=보라/다크=크림)로 구분.
 
 import { cn } from "@/components/ui";
 import type { ReservationDTO } from "@/components/board/types";
 import { minToLabel } from "@/lib/time";
-import { DoorOpen, Pencil, Repeat, SquareArrowOutUpRight } from "lucide-react";
+import { DoorOpen, Repeat, SquareArrowOutUpRight } from "lucide-react";
 
 type Props = {
   items: ReservationDTO[];
@@ -52,12 +52,7 @@ export function ReservationList({
               dimmed && "opacity-60"
             )}
           >
-            {mine && (
-              <>
-                <span aria-hidden className="absolute left-0 inset-y-0 w-[3px] bg-accent" />
-                <Pencil aria-hidden size={12} className="absolute top-2 right-2 text-accent opacity-90" />
-              </>
-            )}
+            {mine && <span aria-hidden className="mine-stripe absolute left-0 inset-y-0 w-[3px]" />}
             <div className="shrink-0 h-10 w-10 rounded-lg bg-accent-soft text-accent flex items-center justify-center">
               <DoorOpen size={16} />
             </div>

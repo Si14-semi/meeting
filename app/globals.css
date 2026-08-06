@@ -2,7 +2,7 @@
 
 :root {
   color-scheme: light;
-  --background: #eef0f4; /* 은은한 그레이 — 흰 카드가 바탕에서 떠 보이게 */
+  --background: #e5e8ee; /* 은은한 그레이 — 흰 카드가 바탕에서 떠 보이게 */
   --foreground: #1a1d24;
   --card: #ffffff;
   --muted: #6b7280;
@@ -112,6 +112,14 @@ body {
   -webkit-user-select: none;
   user-select: none;
   touch-action: manipulation;
+}
+
+/* 내 예약 좌측 스트라이프 — 라이트: 브랜드 보라 / 다크: 크림색 (어두운 배경에서 잘 보이도록) */
+.mine-stripe {
+  background: var(--accent);
+}
+.dark .mine-stripe {
+  background: #f2e7c9;
 }
 
 /* 터치 기기의 날짜 입력: 네이티브 달력 아이콘 숨김 (칸 전체가 탭 영역이라 불필요 + 좁은 칸에서 잘림 방지) */
