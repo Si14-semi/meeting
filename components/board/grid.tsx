@@ -16,7 +16,7 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { cn } from "@/components/ui";
-import { colorForRoom } from "@/components/board/palette";
+import { reservationColor } from "@/components/board/palette";
 import { useTheme } from "@/components/theme";
 import type { Me, ReservationDTO, Room } from "@/components/board/types";
 import { OPEN_MIN, CLOSE_MIN, SLOT_MIN, SLOTS_PER_DAY, minToLabel } from "@/lib/time";
@@ -68,9 +68,6 @@ export function GridHeader({
 }) {
   const boundaries = useMemo(() => floorBoundaries(rooms), [rooms]);
   const [tip, setTip] = useState<{ room: Room; x: number; y: number } | null>(null);
-  const { dark } = useTheme();
-
-  const tipColor = tip ? colorForRoom(tip.room.id, dark) : null;
 
   return (
     <div className="flex bg-gray-100/80">
@@ -82,41 +79,32 @@ export function GridHeader({
         <span className="text-[12px] font-semibold text-gray-500">시간</span>
       </div>
       <div className="flex flex-1 relative">
-        {rooms.map((room, i) => {
-          const color = colorForRoom(room.id, dark);
-          return (
-            <button
-              key={room.id}
-              onClick={() => onRoomInfo(room)}
-              onMouseEnter={(e) => {
-                if (!window.matchMedia("(hover: hover)").matches) return;
-                const rect = e.currentTarget.getBoundingClientRect();
-                setTip({ room, x: rect.left + rect.width / 2, y: rect.bottom });
-              }}
-              onMouseLeave={() => setTip(null)}
-              className={cn(
-                "relative flex-1 min-w-0 py-2 text-center cursor-pointer hover:bg-gray-50/70 transition-colors group",
-                "border-l border-line",
-                boundaries.includes(i) && "border-l-transparent"
-              )}
-            >
-              <span className="text-sm font-bold text-gray-800">{room.number}호</span>
-              {/* 회의실 고유색 언더라인 */}
-              <span
-                aria-hidden
-                className="absolute inset-x-0 bottom-0 h-[3px]"
-                style={{ background: color.border }}
-              />
-            </button>
-          );
-        })}
+        {rooms.map((room, i) => (
+          <button
+            key={room.id}
+            onClick={() => onRoomInfo(room)}
+            onMouseEnter={(e) => {
+              if (!window.matchMedia("(hover: hover)").matches) return;
+              const rect = e.currentTarget.getBoundingClientRect();
+              setTip({ room, x: rect.left + rect.width / 2, y: rect.bottom });
+            }}
+            onMouseLeave={() => setTip(null)}
+            className={cn(
+              "relative flex-1 min-w-0 py-2 text-center cursor-pointer hover:bg-gray-50/70 transition-colors group",
+              "border-l border-line",
+              boundaries.includes(i) && "border-l-transparent"
+            )}
+          >
+            <span className="text-sm font-bold text-gray-800">{room.number}호</span>
+          </button>
+        ))}
         <FloorDividers boundaries={boundaries} count={rooms.length} />
       </div>
-      {/* hover 툴팁 — overflow 클리핑을 피해 fixed로, 해당 회의실 파스텔색 배경 */}
-      {tip && tipColor && (
+      {/* hover 툴팁 — overflow 클리핑을 피해 fixed로, 중립(카드) 배경 */}
+      {tip && (
         <div
-          className="fixed z-[70] -translate-x-1/2 text-[12px] leading-relaxed rounded-lg border px-3 py-2 w-max max-w-52 text-left shadow-md pointer-events-none"
-          style={{ left: tip.x, top: tip.y + 6, background: tipColor.bg, borderColor: tipColor.border, color: tipColor.text }}
+          className="fixed z-[70] -translate-x-1/2 text-[12px] leading-relaxed rounded-lg border border-line bg-card text-foreground px-3 py-2 w-max max-w-52 text-left shadow-md pointer-events-none"
+          style={{ left: tip.x, top: tip.y + 6 }}
         >
           <div className="font-bold">{tip.room.number}호</div>
           <div>
@@ -540,7 +528,7 @@ function ReservationBlock({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const { dark } = useTheme();
-  const color = colorForRoom(r.roomId, dark);
+  const color = reservationColor(mine, dark);
   const top = ((r.startMin - OPEN_MIN) / SLOT_MIN) * slotHeight;
   const height = ((r.endMin - r.startMin) / SLOT_MIN) * slotHeight;
   const slots = (r.endMin - r.startMin) / SLOT_MIN;
@@ -601,10 +589,6 @@ function ReservationBlock({
         onDoubleClick();
       }}
     >
-      {/* 내 예약 표시: 좌측 스트라이프 (라이트=보라 / 다크=크림, .mine-stripe) */}
-      {mine && (
-        <span aria-hidden className="mine-stripe absolute left-0 inset-y-0 w-[3px] rounded-l-[5px]" />
-      )}
       {/* 표기 규칙 (사용자 확정): 15분=이름만 / 30분=이름·목적 / 45분+=이름·목적·시간
           — 생략된 정보는 hover(title)로 확인 */}
       <div className="leading-tight">

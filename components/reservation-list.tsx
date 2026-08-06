@@ -3,7 +3,7 @@
 // 예약 목록 카드 — 내 예약 / 검색 결과 공용.
 // 클릭=선택(재클릭 해제), Ctrl(Cmd)+클릭=다중 선택, 더블클릭=수정,
 // 이동 아이콘=예약 현황에서 해당 예약 보기.
-// 내 예약은 좌측 스트라이프(라이트=보라/다크=크림)로 구분.
+// 내 예약은 인디고(브랜드색) 아이콘, 타인 예약은 회색 아이콘으로 구분 (그리드의 단색 톤 체계와 일치).
 
 import { cn } from "@/components/ui";
 import type { ReservationDTO } from "@/components/board/types";
@@ -52,8 +52,12 @@ export function ReservationList({
               dimmed && "opacity-60"
             )}
           >
-            {mine && <span aria-hidden className="mine-stripe absolute left-0 inset-y-0 w-[3px]" />}
-            <div className="shrink-0 h-10 w-10 rounded-lg bg-accent-soft text-accent flex items-center justify-center">
+            <div
+              className={cn(
+                "shrink-0 h-10 w-10 rounded-lg flex items-center justify-center",
+                meId === undefined || mine ? "bg-accent-soft text-accent" : "bg-gray-100 text-gray-500"
+              )}
+            >
               <DoorOpen size={16} />
             </div>
             <div className="min-w-0 flex-1">
