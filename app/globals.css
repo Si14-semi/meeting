@@ -56,6 +56,11 @@ body {
   touch-action: manipulation;
 }
 
+/* 터치 기기의 날짜 입력: 네이티브 달력 아이콘 숨김 (칸 전체가 탭 영역이라 불필요 + 좁은 칸에서 잘림 방지) */
+.touch-date::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
 @keyframes fade-in-up {
   from {
     opacity: 0;

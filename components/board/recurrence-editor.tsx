@@ -5,6 +5,7 @@
 import { cn, Input, Select } from "@/components/ui";
 import { weekdayOf, weekdayKo } from "@/lib/time";
 import type { RecurrenceInput } from "@/components/board/types";
+import { useIsTouch } from "@/components/use-touch";
 
 type Preset = "NONE" | "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY" | "CUSTOM";
 
@@ -29,6 +30,7 @@ export function defaultRecurrence(anchorDate: string, frequency: RecurrenceInput
 }
 
 export function RecurrenceEditor({ anchorDate, value, custom, onChange }: Props) {
+  const isTouch = useIsTouch();
   const preset: Preset = value === null ? "NONE" : custom ? "CUSTOM" : value.frequency;
 
   function setPreset(p: Preset) {
@@ -169,7 +171,7 @@ export function RecurrenceEditor({ anchorDate, value, custom, onChange }: Props)
                 min={anchorDate}
                 disabled={endMode !== "date"}
                 onChange={(e) => onChange({ ...value, endDate: e.target.value || anchorDate, count: null }, custom)}
-                className="h-9 w-40 disabled:bg-gray-100 disabled:text-gray-400"
+                className={cn("h-9 w-40 disabled:bg-gray-100 disabled:text-gray-400", isTouch && "touch-date")}
               />
             </label>
             <label className="flex items-center gap-2 text-sm cursor-pointer">

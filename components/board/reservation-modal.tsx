@@ -7,6 +7,7 @@
 import { useMemo, useState } from "react";
 import { Alert, Button, Input, Label, Modal, Select, Spinner, cn } from "@/components/ui";
 import { RecurrenceEditor } from "@/components/board/recurrence-editor";
+import { useIsTouch } from "@/components/use-touch";
 import type { ConflictInfo, Me, RecurrenceInput, ReservationDTO, Room } from "@/components/board/types";
 import { OPEN_MIN, CLOSE_MIN, SLOT_MIN, minToLabel, labelToMin, formatDateWithWeekday, kstTodayStr } from "@/lib/time";
 import { Repeat, Trash2 } from "lucide-react";
@@ -46,6 +47,7 @@ function ConflictList({ conflicts }: { conflicts: ConflictInfo[] }) {
 }
 
 export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) {
+  const isTouch = useIsTouch();
   const isEdit = state.mode === "edit";
   const r = isEdit ? state.reservation : null;
   const isPast = isEdit && r!.date < kstTodayStr();
@@ -295,7 +297,7 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
           )}
 
           <div className="grid grid-cols-2 gap-3">
-            <div>
+            <div className="min-w-0">
               <Label htmlFor="rv-room">회의실</Label>
               <Select
                 id="rv-room"
@@ -310,7 +312,7 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
                 ))}
               </Select>
             </div>
-            <div>
+            <div className="min-w-0">
               <Label htmlFor="rv-date">날짜</Label>
               <Input
                 id="rv-date"
@@ -319,65 +321,72 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
                 min={readOnly ? undefined : kstTodayStr()}
                 onChange={(e) => setDate(e.target.value)}
                 disabled={readOnly}
+                className={cn("min-w-0", isTouch && "touch-date")}
               />
             </div>
-            <div>
+            {/* 시간 입력: 장치 기준 전환 (화면 폭 기준이면 가로 회전 시 네이티브 아이콘이
+                좁은 칸에서 잘리거나 겹침) — 터치=15분 드롭다운 / 마우스=직접 입력 time input */}
+            <div className="min-w-0">
               <Label htmlFor="rv-start">시작</Label>
-              {/* 데스크톱: 직접 입력 가능한 time input / 모바일: 15분 단위 드롭다운
-                  (모바일 네이티브 시간 선택기는 step을 무시하고 1분 단위를 보여주기 때문) */}
-              <Input
-                id="rv-start"
-                type="time"
-                step={SLOT_MIN * 60}
-                min="09:00"
-                max="19:00"
-                list="rv-times"
-                value={startLabel}
-                onChange={(e) => setStartLabel(e.target.value)}
-                disabled={readOnly}
-                className="hidden sm:block"
-              />
-              <Select
-                aria-label="시작 시간"
-                value={startLabel}
-                onChange={(e) => setStartLabel(e.target.value)}
-                disabled={readOnly}
-                className="sm:hidden"
-              >
-                {timeOptions.slice(0, -1).map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </Select>
+              {isTouch ? (
+                <Select
+                  id="rv-start"
+                  aria-label="시작 시간"
+                  value={startLabel}
+                  onChange={(e) => setStartLabel(e.target.value)}
+                  disabled={readOnly}
+                >
+                  {timeOptions.slice(0, -1).map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </Select>
+              ) : (
+                <Input
+                  id="rv-start"
+                  type="time"
+                  step={SLOT_MIN * 60}
+                  min="09:00"
+                  max="19:00"
+                  list="rv-times"
+                  value={startLabel}
+                  onChange={(e) => setStartLabel(e.target.value)}
+                  disabled={readOnly}
+                  className="min-w-0"
+                />
+              )}
             </div>
-            <div>
+            <div className="min-w-0">
               <Label htmlFor="rv-end">종료</Label>
-              <Input
-                id="rv-end"
-                type="time"
-                step={SLOT_MIN * 60}
-                min="09:15"
-                max="19:00"
-                list="rv-times"
-                value={endLabel}
-                onChange={(e) => setEndLabel(e.target.value)}
-                disabled={readOnly}
-                className="hidden sm:block"
-              />
-              <Select
-                aria-label="종료 시간"
-                value={endLabel}
-                onChange={(e) => setEndLabel(e.target.value)}
-                disabled={readOnly}
-                className="sm:hidden"
-              >
-                {timeOptions.slice(1).map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </Select>
+              {isTouch ? (
+                <Select
+                  id="rv-end"
+                  aria-label="종료 시간"
+                  value={endLabel}
+                  onChange={(e) => setEndLabel(e.target.value)}
+                  disabled={readOnly}
+                >
+                  {timeOptions.slice(1).map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </Select>
+              ) : (
+                <Input
+                  id="rv-end"
+                  type="time"
+                  step={SLOT_MIN * 60}
+                  min="09:15"
+                  max="19:00"
+                  list="rv-times"
+                  value={endLabel}
+                  onChange={(e) => setEndLabel(e.target.value)}
+                  disabled={readOnly}
+                  className="min-w-0"
+                />
+              )}
               <datalist id="rv-times">
                 {timeOptions.map((t) => (
                   <option key={t} value={t} />

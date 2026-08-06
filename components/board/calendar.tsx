@@ -83,7 +83,7 @@ export function MonthCalendar({ value, onChange, holidays }: Props) {
                 onClick={() => onChange(date)}
                 title={holiday}
                 className={cn(
-                  "h-9 flex flex-col items-center justify-center rounded-lg text-[13px] font-medium transition-colors cursor-pointer relative",
+                  "h-9 flex items-center justify-center rounded-lg text-[13px] font-medium transition-colors cursor-pointer",
                   isSelected
                     ? "bg-accent text-white shadow-sm"
                     : cn(
@@ -94,14 +94,6 @@ export function MonthCalendar({ value, onChange, holidays }: Props) {
                 )}
               >
                 {dayNum}
-                {holiday && (
-                  <span
-                    className={cn(
-                      "absolute bottom-1 h-1 w-1 rounded-full",
-                      isSelected ? "bg-white" : "bg-red-400"
-                    )}
-                  />
-                )}
               </button>
             );
           })}
