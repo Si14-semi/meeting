@@ -67,7 +67,7 @@ export function MyReservations({ me }: { me: Me }) {
             onClick={() => setTab(key)}
             className={cn(
               "rounded-lg px-4 py-1.5 text-sm font-semibold transition-colors cursor-pointer",
-              tab === key ? "bg-white text-accent shadow-sm" : "text-gray-500"
+              tab === key ? "bg-card text-accent shadow-sm" : "text-gray-500"
             )}
           >
             {label}
@@ -109,7 +109,7 @@ export function MyReservations({ me }: { me: Me }) {
       )}
 
       {toast && (
-        <div className="fixed bottom-20 sm:bottom-6 left-1/2 -translate-x-1/2 z-[60] rounded-full px-4 py-2 text-sm font-medium text-white bg-gray-900/90 shadow-lg animate-fade-in-up">
+        <div className="fixed bottom-20 sm:bottom-6 left-1/2 -translate-x-1/2 z-[60] rounded-full px-4 py-2 text-sm font-medium text-white bg-neutral-900/90 shadow-lg animate-fade-in-up">
           {toast}
         </div>
       )}

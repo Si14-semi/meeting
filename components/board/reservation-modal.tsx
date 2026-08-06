@@ -29,7 +29,7 @@ type Props = {
 /** 서버 응답의 충돌 목록 렌더링 */
 function ConflictList({ conflicts }: { conflicts: ConflictInfo[] }) {
   return (
-    <div className="max-h-40 overflow-y-auto thin-scroll rounded-lg border border-line divide-y divide-line bg-white">
+    <div className="max-h-40 overflow-y-auto thin-scroll rounded-lg border border-line divide-y divide-line bg-card">
       {conflicts.flatMap((c) =>
         c.items.map((item) => (
           <div key={`${c.date}-${item.id}`} className="px-3 py-2 text-[13px]">

@@ -203,7 +203,7 @@ function RoomRow({
         placeholder="회의실 정보 (자유 입력, 여러 줄 가능)"
         onChange={(e) => setEdit({ ...edit, description: e.target.value })}
         rows={1}
-        className="flex-1 min-w-32 rounded-lg border border-line bg-white px-3 py-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+        className="flex-1 min-w-32 rounded-lg border border-line bg-card px-3 py-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
         aria-label="회의실 정보"
       />
       <span className="text-[12px] text-gray-400 w-16 text-right">예약 {room.reservationCount}건</span>

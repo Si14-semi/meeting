@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/components/ui";
-import { CalendarDays, Search, User, Shield, LogOut } from "lucide-react";
+import { useTheme } from "@/components/theme";
+import { CalendarDays, Search, User, Shield, LogOut, Sun, Moon } from "lucide-react";
 
 type Props = {
   userName: string;
@@ -19,6 +20,7 @@ const NAV = [
 export function AppHeader({ userName, isAdmin }: Props) {
   const pathname = usePathname();
   const router = useRouter();
+  const { dark, toggle } = useTheme();
 
   const nav = isAdmin ? [...NAV, { href: "/admin", label: "관리자", icon: Shield }] : NAV;
 
@@ -31,7 +33,7 @@ export function AppHeader({ userName, isAdmin }: Props) {
   return (
     <>
       {/* 상단 헤더 */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-line">
+      <header className="sticky top-0 z-40 bg-card/90 backdrop-blur border-b border-line">
         <div className="mx-auto max-w-7xl px-4 h-14 flex items-center justify-between gap-3">
           <div className="flex items-center gap-6 min-w-0">
             <Link href="/" className="text-lg font-extrabold tracking-tight text-accent shrink-0">
@@ -60,6 +62,14 @@ export function AppHeader({ userName, isAdmin }: Props) {
             </nav>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={toggle}
+              className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-gray-100 transition-colors cursor-pointer"
+              title={dark ? "라이트 모드로 전환" : "다크 모드로 전환"}
+              aria-label="테마 전환"
+            >
+              {dark ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
             <span className="text-[13px] text-gray-600 max-w-[120px] truncate">
               <b className="font-semibold text-foreground">{userName}</b>님
             </span>
@@ -76,7 +86,7 @@ export function AppHeader({ userName, isAdmin }: Props) {
       </header>
 
       {/* 모바일 하단 내비게이션 */}
-      <nav className="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur border-t border-line pb-[env(safe-area-inset-bottom)]">
+      <nav className="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-card/95 backdrop-blur border-t border-line pb-[env(safe-area-inset-bottom)]">
         <div className="flex">
           {nav.map(({ href, label, icon: Icon }) => {
             const active = href === "/" ? pathname === "/" : pathname.startsWith(href);

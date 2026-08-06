@@ -97,6 +97,18 @@ model Reservation {
   @@map("reservations")
 }
 
+// 관리자 팝업 공지 — 활성 상태는 최대 2개까지 (API에서 강제)
+model Notice {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("notices")
+}
+
 model Holiday {
   date String @id // "YYYY-MM-DD"
   name String

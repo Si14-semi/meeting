@@ -16,7 +16,7 @@ const buttonStyles: Record<ButtonVariant, string> = {
   primary:
     "bg-accent text-white hover:bg-indigo-700 disabled:bg-indigo-300 shadow-sm",
   secondary:
-    "bg-white text-foreground border border-line hover:bg-gray-50 disabled:text-gray-400",
+    "bg-card text-foreground border border-line hover:bg-gray-50 disabled:text-gray-400",
   ghost: "text-muted hover:bg-gray-100 hover:text-foreground",
   danger: "bg-danger text-white hover:bg-red-700 disabled:bg-red-300 shadow-sm",
 };
@@ -52,7 +52,7 @@ export const Input = forwardRef<
     <input
       ref={ref}
       className={cn(
-        "h-10 w-full rounded-lg border border-line bg-white px-3 text-sm text-foreground placeholder:text-gray-400",
+        "h-10 w-full rounded-lg border border-line bg-card px-3 text-sm text-foreground placeholder:text-gray-400",
         "focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-shadow",
         className
       )}
@@ -87,7 +87,7 @@ export const Select = forwardRef<
     <select
       ref={ref}
       className={cn(
-        "h-10 w-full rounded-lg border border-line bg-white px-2.5 text-sm text-foreground",
+        "h-10 w-full rounded-lg border border-line bg-card px-2.5 text-sm text-foreground",
         "focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-shadow cursor-pointer",
         className
       )}
@@ -189,7 +189,7 @@ export function Modal({
     >
       <div
         className={cn(
-          "w-full bg-white shadow-xl animate-fade-in-up",
+          "w-full bg-card shadow-xl animate-fade-in-up",
           "rounded-t-2xl sm:rounded-2xl max-h-[92dvh] overflow-y-auto thin-scroll",
           maxWidth
         )}

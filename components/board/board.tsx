@@ -332,7 +332,7 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
               {holidayName && <span className="text-[12px] font-medium text-red-400">{holidayName}</span>}
             </button>
             {calOpen && (
-              <div className="absolute left-0 top-full mt-1 z-50 bg-white rounded-xl border border-line shadow-lg p-3 animate-fade-in-up">
+              <div className="absolute left-0 top-full mt-1 z-50 bg-card rounded-xl border border-line shadow-lg p-3 animate-fade-in-up">
                 <MonthCalendar
                   value={date}
                   onChange={(d) => {
@@ -553,7 +553,7 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
         <div
           className={cn(
             "fixed bottom-20 sm:bottom-6 left-1/2 -translate-x-1/2 z-[60] rounded-full px-4 py-2 text-sm font-medium text-white shadow-lg animate-fade-in-up",
-            toast.kind === "ok" ? "bg-gray-900/90" : "bg-red-600/95"
+            toast.kind === "ok" ? "bg-neutral-900/90" : "bg-red-600/95"
           )}
         >
           {toast.text}

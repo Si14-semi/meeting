@@ -115,7 +115,7 @@ export function RecurrenceEditor({ anchorDate, value, custom, onChange }: Props)
                     }}
                     className={cn(
                       "h-8 w-8 rounded-full text-[13px] font-medium transition-colors cursor-pointer",
-                      active ? "bg-accent text-white" : "bg-white border border-line text-gray-600 hover:bg-gray-100"
+                      active ? "bg-accent text-white" : "bg-card border border-line text-gray-600 hover:bg-gray-100"
                     )}
                   >
                     {label}

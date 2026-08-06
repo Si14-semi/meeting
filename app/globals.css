@@ -12,6 +12,61 @@
   --danger: #dc2626;
 }
 
+/* ===== 다크 테마 =====
+   토큰 교체 + Tailwind gray 스케일 반전으로 기존 클래스가 자동으로 다크에 맞게 동작한다. */
+.dark {
+  --background: #12141a;
+  --foreground: #e6e9ef;
+  --card: #1a1d24;
+  --muted: #9aa3b2;
+  --line: #2a2e38;
+  --line-strong: #3d4453;
+  --accent: #6d75f5;
+  --accent-soft: rgba(99, 102, 241, 0.16);
+  --danger: #ef4444;
+
+  /* gray 스케일 반전 (bg-gray-50 → 어두운 면, text-gray-800 → 밝은 글씨) */
+  --color-gray-50: #1e222b;
+  --color-gray-100: #262b35;
+  --color-gray-200: #323845;
+  --color-gray-300: #454d5d;
+  --color-gray-400: #7d8698;
+  --color-gray-500: #98a1b1;
+  --color-gray-600: #b3bac7;
+  --color-gray-700: #cad0da;
+  --color-gray-800: #e0e4ea;
+  --color-gray-900: #f0f2f6;
+
+  /* 색 틴트 배경/보더 (Alert, 상태 칩) */
+  --color-red-50: rgba(239, 68, 68, 0.12);
+  --color-red-100: rgba(239, 68, 68, 0.2);
+  --color-red-200: rgba(239, 68, 68, 0.4);
+  --color-red-300: #7f2f38;
+  --color-amber-50: rgba(245, 158, 11, 0.12);
+  --color-amber-100: rgba(245, 158, 11, 0.2);
+  --color-amber-200: rgba(245, 158, 11, 0.4);
+  --color-indigo-50: rgba(99, 102, 241, 0.16);
+  --color-indigo-200: rgba(99, 102, 241, 0.45);
+  --color-indigo-300: #4a4f9e;
+  --color-emerald-50: rgba(16, 185, 129, 0.14);
+  --color-emerald-100: rgba(16, 185, 129, 0.24);
+}
+
+/* 틴트 배경 위 텍스트는 다크에서 밝은 톤으로 (hover:bg-*-700 버튼과의 충돌을 피해 텍스트만 지정) */
+.dark .text-indigo-700 {
+  color: #a5b4fc;
+}
+.dark .text-red-700 {
+  color: #fca5a5;
+}
+.dark .text-amber-700,
+.dark .text-amber-800 {
+  color: #fcd34d;
+}
+.dark .text-emerald-700 {
+  color: #6ee7b7;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

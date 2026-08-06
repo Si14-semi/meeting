@@ -8,9 +8,11 @@ import { RoomsAdmin } from "@/components/admin/rooms-admin";
 import { HolidaysAdmin } from "@/components/admin/holidays-admin";
 import { UsersAdmin } from "@/components/admin/users-admin";
 import { AuditAdmin } from "@/components/admin/audit-admin";
+import { NoticesAdmin } from "@/components/admin/notices-admin";
 
 const TABS = [
   { key: "rooms", label: "회의실" },
+  { key: "notices", label: "공지" },
   { key: "holidays", label: "공휴일" },
   { key: "users", label: "회원" },
   { key: "audit", label: "감사 로그" },
@@ -31,7 +33,7 @@ export function AdminView() {
             onClick={() => setTab(t.key)}
             className={cn(
               "rounded-lg px-4 py-1.5 text-sm font-semibold transition-colors cursor-pointer",
-              tab === t.key ? "bg-white text-accent shadow-sm" : "text-gray-500"
+              tab === t.key ? "bg-card text-accent shadow-sm" : "text-gray-500"
             )}
           >
             {t.label}
@@ -39,6 +41,7 @@ export function AdminView() {
         ))}
       </div>
       {tab === "rooms" && <RoomsAdmin />}
+      {tab === "notices" && <NoticesAdmin />}
       {tab === "holidays" && <HolidaysAdmin />}
       {tab === "users" && <UsersAdmin />}
       {tab === "audit" && <AuditAdmin />}

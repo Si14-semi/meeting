@@ -17,6 +17,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { cn } from "@/components/ui";
 import { colorForRoom } from "@/components/board/palette";
+import { useTheme } from "@/components/theme";
 import type { Me, ReservationDTO, Room } from "@/components/board/types";
 import { OPEN_MIN, CLOSE_MIN, SLOT_MIN, SLOTS_PER_DAY, minToLabel } from "@/lib/time";
 import { Repeat } from "lucide-react";
@@ -67,8 +68,9 @@ export function GridHeader({
 }) {
   const boundaries = useMemo(() => floorBoundaries(rooms), [rooms]);
   const [tip, setTip] = useState<{ room: Room; x: number; y: number } | null>(null);
+  const { dark } = useTheme();
 
-  const tipColor = tip ? colorForRoom(tip.room.id) : null;
+  const tipColor = tip ? colorForRoom(tip.room.id, dark) : null;
 
   return (
     <div className="flex bg-gray-100/80">
@@ -81,7 +83,7 @@ export function GridHeader({
       </div>
       <div className="flex flex-1 relative">
         {rooms.map((room, i) => {
-          const color = colorForRoom(room.id);
+          const color = colorForRoom(room.id, dark);
           return (
             <button
               key={room.id}
@@ -93,7 +95,7 @@ export function GridHeader({
               }}
               onMouseLeave={() => setTip(null)}
               className={cn(
-                "relative flex-1 min-w-0 py-2 text-center cursor-pointer hover:bg-white/70 transition-colors group",
+                "relative flex-1 min-w-0 py-2 text-center cursor-pointer hover:bg-gray-50/70 transition-colors group",
                 "border-l border-line",
                 boundaries.includes(i) && "border-l-transparent"
               )}
@@ -533,7 +535,8 @@ function ReservationBlock({
   onDoubleClick: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const color = colorForRoom(r.roomId);
+  const { dark } = useTheme();
+  const color = colorForRoom(r.roomId, dark);
   const top = ((r.startMin - OPEN_MIN) / SLOT_MIN) * slotHeight;
   const height = ((r.endMin - r.startMin) / SLOT_MIN) * slotHeight;
   const slots = (r.endMin - r.startMin) / SLOT_MIN;
