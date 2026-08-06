@@ -21,11 +21,67 @@ export function SearchView({ me }: { me: Me }) {
   const [results, setResults] = useState<ReservationDTO[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<ReservationDTO | null>(null);
   const [toast, setToast] = useState("");
 
   const today = kstTodayStr();
+
+  const handleSelect = (r: ReservationDTO, additive: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (additive) {
+        if (next.has(r.id)) next.delete(r.id);
+        else next.add(r.id);
+        return next;
+      }
+      if (prev.size === 1 && prev.has(r.id)) return new Set();
+      return new Set([r.id]);
+    });
+  };
+
+  // Delete = 선택 일괄 취소 / Esc = 해제 (지난 예약·타인 예약은 제외)
+  useEffect(() => {
+    async function onKey(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (e.key === "Escape") {
+        setSelectedIds(new Set());
+        return;
+      }
+      if (e.key !== "Delete" || selectedIds.size === 0 || editing || !results) return;
+      const targets = results.filter((r) => selectedIds.has(r.id));
+      const deletable = targets.filter(
+        (r) => r.date >= today && (r.userId === me.id || me.role === "ADMIN")
+      );
+      const skipped = targets.length - deletable.length;
+      if (deletable.length === 0) {
+        setToast("취소할 수 있는 예약이 없습니다. (지난 예약·타인 예약 제외)");
+        window.setTimeout(() => setToast(""), 4000);
+        return;
+      }
+      let msg = `선택한 ${deletable.length}건의 예약을 취소하시겠습니까?`;
+      if (skipped > 0) msg += `\n(지난 예약·타인 예약 ${skipped}건은 제외됩니다)`;
+      if (deletable.some((r) => r.isRecurring)) msg += `\n반복 예약은 선택한 일정만 취소됩니다.`;
+      if (!confirm(msg)) return;
+      const rs = await Promise.all(
+        deletable.map((r) =>
+          fetch(`/api/reservations/${r.id}?scope=one`, { method: "DELETE" })
+            .then((res) => res.ok)
+            .catch(() => false)
+        )
+      );
+      const ok = rs.filter(Boolean).length;
+      setSelectedIds(new Set());
+      const q0 = q.trim();
+      if (q0) runSearch(q0);
+      setToast(ok === rs.length ? `${ok}건의 예약이 취소되었습니다.` : `${ok}건 취소, ${rs.length - ok}건 실패했습니다.`);
+      window.setTimeout(() => setToast(""), 4000);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIds, results, editing, me, q]);
 
   useEffect(() => {
     fetch("/api/rooms")
@@ -65,7 +121,7 @@ export function SearchView({ me }: { me: Me }) {
   function clearSearch() {
     setQ("");
     setResults(null);
-    setSelectedId(null);
+    setSelectedIds(new Set());
     sessionStorage.removeItem(SEARCH_KEY);
     inputRef.current?.focus();
   }
@@ -113,8 +169,9 @@ export function SearchView({ me }: { me: Me }) {
           </p>
           <ReservationList
             items={results}
-            selectedId={selectedId}
-            onSelect={(r) => setSelectedId((prev) => (prev === r.id ? null : r.id))}
+            meId={me.id}
+            selectedIds={selectedIds}
+            onSelect={handleSelect}
             onEdit={(r) => setEditing(r)}
             onGoto={(r) => router.push(`/?date=${r.date}&focus=${r.id}`)}
             dimWhen={(r) => r.date < today}

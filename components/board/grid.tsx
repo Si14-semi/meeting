@@ -20,7 +20,7 @@ import { colorForRoom } from "@/components/board/palette";
 import { useTheme } from "@/components/theme";
 import type { Me, ReservationDTO, Room } from "@/components/board/types";
 import { OPEN_MIN, CLOSE_MIN, SLOT_MIN, SLOTS_PER_DAY, minToLabel } from "@/lib/time";
-import { Repeat } from "lucide-react";
+import { Pencil, Repeat } from "lucide-react";
 
 const GUTTER_W = 56; // 시간 눈금 열 너비
 const EDGE_PX = 8; // 블록 상/하단 스트레치 감지 영역
@@ -141,8 +141,9 @@ type Props = {
   minColWidth: number;
   stickyHeader: boolean;
   hideHeader?: boolean; // 모바일: board가 헤더를 밖에서 렌더
-  selectedId: string | null;
-  onSelect: (id: string | null) => void;
+  selectedIds: Set<string>;
+  /** id=null → 전체 해제 / additive=true → Ctrl+클릭 다중 선택 토글 */
+  onSelect: (id: string | null, additive?: boolean) => void;
   onCreate: (roomId: number, startMin: number, endMin: number) => void;
   onOpen: (res: ReservationDTO) => void;
   onCommit: (res: ReservationDTO, patch: { roomId: number; startMin: number; endMin: number }) => void;
@@ -159,7 +160,7 @@ export function ReservationGrid({
   minColWidth,
   stickyHeader,
   hideHeader = false,
-  selectedId,
+  selectedIds,
   onSelect,
   onCreate,
   onOpen,
@@ -428,7 +429,8 @@ export function ReservationGrid({
                       r={r}
                       slotHeight={slotHeight}
                       editable={canEdit(r)}
-                      selected={selectedId === r.id}
+                      mine={r.userId === me.id}
+                      selected={selectedIds.has(r.id)}
                       dimmed={!!drag && drag.type !== "create" && "res" in drag && drag.res.id === r.id}
                       onStartDrag={(type, grabOffsetSlots) => {
                         dragMoved.current = false;
@@ -446,9 +448,9 @@ export function ReservationGrid({
                           setDrag({ type: "resize-bottom", res: r, curSlot: (r.endMin - OPEN_MIN) / SLOT_MIN - 1 });
                         }
                       }}
-                      onToggleSelect={() => {
+                      onToggleSelect={(additive) => {
                         if (dragMoved.current) return;
-                        onSelect(selectedId === r.id ? null : r.id);
+                        onSelect(r.id, additive);
                         setEmptySel(null);
                       }}
                       onDoubleClick={() => onOpen(r)}
@@ -519,6 +521,7 @@ function ReservationBlock({
   r,
   slotHeight,
   editable,
+  mine,
   selected,
   dimmed,
   onStartDrag,
@@ -528,10 +531,11 @@ function ReservationBlock({
   r: ReservationDTO;
   slotHeight: number;
   editable: boolean;
+  mine: boolean;
   selected: boolean;
   dimmed: boolean;
   onStartDrag: (type: "move" | "resize-top" | "resize-bottom", grabOffsetSlots: number) => void;
-  onToggleSelect: () => void;
+  onToggleSelect: (additive: boolean) => void;
   onDoubleClick: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -590,16 +594,27 @@ function ReservationBlock({
       }}
       onClick={(e) => {
         e.stopPropagation();
-        onToggleSelect();
+        onToggleSelect(e.ctrlKey || e.metaKey);
       }}
       onDoubleClick={(e) => {
         e.stopPropagation();
         onDoubleClick();
       }}
     >
+      {/* 내 예약 표시: 좌측 accent 스트라이프 + 우상단 연필(편집 가능) — 사용자 확정 */}
+      {mine && (
+        <>
+          <span aria-hidden className="absolute left-0 inset-y-0 w-[3px] bg-accent rounded-l-[5px]" />
+          <Pencil
+            aria-hidden
+            size={slotHeight < 24 ? 8 : 10}
+            className="absolute top-1 right-1 text-accent opacity-90"
+          />
+        </>
+      )}
       {/* 표기 규칙 (사용자 확정): 15분=이름만 / 30분=이름·목적 / 45분+=이름·목적·시간
           — 생략된 정보는 hover(title)로 확인 */}
-      <div className="leading-tight">
+      <div className="leading-tight" style={mine ? { paddingRight: 12 } : undefined}>
         <span className={cn("font-bold flex items-center gap-0.5 truncate", dense ? "text-[11px]" : "text-[12px]")}>
           {r.userName}
           {r.isRecurring && <Repeat size={dense ? 9 : 10} className="shrink-0 opacity-70" />}

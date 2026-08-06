@@ -35,7 +35,9 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
   const [modal, setModal] = useState<ModalState | null>(null);
   const [calOpen, setCalOpen] = useState(false);
   const [toast, setToast] = useState<{ text: string; kind: "ok" | "error" } | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(focusId ?? null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(
+    () => new Set(focusId ? [focusId] : [])
+  );
   const [infoRoom, setInfoRoom] = useState<Room | null>(null);
   const [pending, setPending] = useState<PendingAction | null>(null);
   const [pendingScope, setPendingScope] = useState<Scope>("one");
@@ -60,6 +62,21 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
   const showToast = useCallback((text: string, kind: "ok" | "error" = "ok") => {
     setToast({ text, kind });
     window.setTimeout(() => setToast(null), 4000);
+  }, []);
+
+  /** 클릭=단일 선택(재클릭 해제) / Ctrl(Cmd)+클릭=다중 선택 토글 / null=전체 해제 */
+  const handleSelect = useCallback((id: string | null, additive = false) => {
+    setSelectedIds((prev) => {
+      if (id === null) return prev.size === 0 ? prev : new Set();
+      const next = new Set(prev);
+      if (additive) {
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+      }
+      if (prev.size === 1 && prev.has(id)) return new Set();
+      return new Set([id]);
+    });
   }, []);
 
   const fetchReservations = useCallback(async (d: string) => {
@@ -126,34 +143,70 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
     return () => document.removeEventListener("mousedown", onDown);
   }, [calOpen]);
 
-  // Delete = 선택 예약 삭제 / Esc = 선택 해제
+  // Delete = 선택 예약 취소 (다중 선택 시 일괄) / Esc = 선택 해제
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       if (e.key === "Escape") {
-        setSelectedId(null);
+        handleSelect(null);
         return;
       }
-      if (e.key !== "Delete" || !selectedId || modal || pending) return;
-      const res = reservations.find((r) => r.id === selectedId);
-      if (!res) return;
-      if (res.userId !== me.id && me.role !== "ADMIN") {
-        showToast("본인의 예약만 취소할 수 있습니다.", "error");
+      if (e.key !== "Delete" || selectedIds.size === 0 || modal || pending) return;
+      const targets = reservations.filter((r) => selectedIds.has(r.id));
+      if (targets.length === 0) return;
+
+      // 단일 선택: 기존 플로우 (반복이면 3옵션)
+      if (targets.length === 1) {
+        const res = targets[0];
+        if (res.userId !== me.id && me.role !== "ADMIN") {
+          showToast("본인의 예약만 취소할 수 있습니다.", "error");
+          return;
+        }
+        if (res.isRecurring) {
+          setPendingScope("one");
+          setPendingError("");
+          setPending({ kind: "delete", res });
+        } else if (confirm(`${res.roomNumber}호 ${minToLabel(res.startMin)}~${minToLabel(res.endMin)} 예약을 취소하시겠습니까?`)) {
+          doDelete(res, "one");
+        }
         return;
       }
-      if (res.isRecurring) {
-        setPendingScope("one");
-        setPendingError("");
-        setPending({ kind: "delete", res });
-      } else if (confirm(`${res.roomNumber}호 ${minToLabel(res.startMin)}~${minToLabel(res.endMin)} 예약을 취소하시겠습니까?`)) {
-        doDelete(res, "one");
-      }
+
+      // 다중 선택: 일괄 취소 (반복 예약은 "이 일정만" — 사용자 확정 규칙)
+      bulkDelete(targets);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedId, reservations, modal, pending, me]);
+  }, [selectedIds, reservations, modal, pending, me]);
+
+  async function bulkDelete(targets: ReservationDTO[]) {
+    const editable = targets.filter((r) => r.userId === me.id || me.role === "ADMIN");
+    const skipped = targets.length - editable.length;
+    if (editable.length === 0) {
+      showToast("취소할 수 있는 본인 예약이 없습니다.", "error");
+      return;
+    }
+    let msg = `선택한 ${editable.length}건의 예약을 취소하시겠습니까?`;
+    if (skipped > 0) msg += `\n(타인 예약 ${skipped}건은 제외됩니다)`;
+    if (editable.some((r) => r.isRecurring)) msg += `\n반복 예약은 선택한 일정만 취소됩니다.`;
+    if (!confirm(msg)) return;
+
+    const results = await Promise.all(
+      editable.map((r) =>
+        fetch(`/api/reservations/${r.id}?scope=one`, { method: "DELETE" })
+          .then((res) => res.ok)
+          .catch(() => false)
+      )
+    );
+    const ok = results.filter(Boolean).length;
+    const failed = results.length - ok;
+    handleSelect(null);
+    fetchReservations(date);
+    if (failed > 0) showToast(`${ok}건 취소, ${failed}건 실패했습니다.`, "error");
+    else showToast(skipped > 0 ? `본인 예약 ${ok}건만 취소되었습니다.` : `${ok}건의 예약이 취소되었습니다.`);
+  }
 
   const floors = useMemo(() => {
     const fs = [...new Set(rooms.map((r) => r.floor))].sort((a, b) => a - b);
@@ -209,7 +262,7 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
         showToast(data.error ?? "취소에 실패했습니다.", "error");
         return;
       }
-      setSelectedId(null);
+      handleSelect(null);
       showToast(data.deletedCount > 1 ? `${data.deletedCount}건의 예약이 취소되었습니다.` : "예약이 취소되었습니다.");
     } catch {
       showToast("서버에 연결할 수 없습니다.", "error");
@@ -282,8 +335,8 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
   const gridShared = {
     reservations,
     me,
-    selectedId,
-    onSelect: setSelectedId,
+    selectedIds,
+    onSelect: handleSelect,
     onCreate: (roomId: number, startMin: number, endMin: number) => {
       if (date < today) {
         showToast("지난 날짜는 예약할 수 없습니다.", "error");

@@ -2,7 +2,7 @@
 
 :root {
   color-scheme: light;
-  --background: #f7f8fa;
+  --background: #eef0f4; /* 은은한 그레이 — 흰 카드가 바탕에서 떠 보이게 */
   --foreground: #1a1d24;
   --card: #ffffff;
   --muted: #6b7280;

@@ -1,18 +1,20 @@
 "use client";
 
 // 예약 목록 카드 — 내 예약 / 검색 결과 공용.
-// 한 번 클릭=선택, 더블클릭=수정, 이동 아이콘=예약 현황에서 해당 예약 보기.
-// 날짜와 요일을 함께 표기한다 (사용자 확정 사항).
+// 클릭=선택(재클릭 해제), Ctrl(Cmd)+클릭=다중 선택, 더블클릭=수정,
+// 이동 아이콘=예약 현황에서 해당 예약 보기.
+// 내 예약은 좌측 accent 스트라이프 + 우상단 연필(편집 가능 표시)로 구분.
 
 import { cn } from "@/components/ui";
 import type { ReservationDTO } from "@/components/board/types";
 import { minToLabel } from "@/lib/time";
-import { DoorOpen, Repeat, SquareArrowOutUpRight } from "lucide-react";
+import { DoorOpen, Pencil, Repeat, SquareArrowOutUpRight } from "lucide-react";
 
 type Props = {
   items: ReservationDTO[];
-  selectedId?: string | null;
-  onSelect?: (r: ReservationDTO) => void;
+  meId?: string;
+  selectedIds?: Set<string>;
+  onSelect?: (r: ReservationDTO, additive: boolean) => void;
   onEdit?: (r: ReservationDTO) => void;
   onGoto?: (r: ReservationDTO) => void;
   dimWhen?: (r: ReservationDTO) => boolean; // 지난 예약 흐림 처리
@@ -21,7 +23,8 @@ type Props = {
 
 export function ReservationList({
   items,
-  selectedId,
+  meId,
+  selectedIds,
   onSelect,
   onEdit,
   onGoto,
@@ -35,19 +38,26 @@ export function ReservationList({
     <div className="space-y-2">
       {items.map((r) => {
         const dimmed = dimWhen?.(r) ?? false;
-        const selected = selectedId === r.id;
+        const selected = selectedIds?.has(r.id) ?? false;
+        const mine = meId !== undefined && r.userId === meId;
         return (
           <div
             key={r.id}
-            onClick={() => onSelect?.(r)}
+            onClick={(e) => onSelect?.(r, e.ctrlKey || e.metaKey)}
             onDoubleClick={() => onEdit?.(r)}
             className={cn(
-              "w-full text-left bg-card rounded-xl border px-4 py-3 flex items-center gap-3 transition-all select-none",
+              "relative w-full text-left bg-card rounded-xl border px-4 py-3 flex items-center gap-3 transition-all select-none overflow-hidden",
               (onSelect || onEdit) && "cursor-pointer hover:shadow-md",
               selected ? "border-accent ring-2 ring-accent/30" : "border-line",
               dimmed && "opacity-60"
             )}
           >
+            {mine && (
+              <>
+                <span aria-hidden className="absolute left-0 inset-y-0 w-[3px] bg-accent" />
+                <Pencil aria-hidden size={12} className="absolute top-2 right-2 text-accent opacity-90" />
+              </>
+            )}
             <div className="shrink-0 h-10 w-10 rounded-lg bg-accent-soft text-accent flex items-center justify-center">
               <DoorOpen size={16} />
             </div>
