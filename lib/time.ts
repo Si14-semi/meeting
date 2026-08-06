@@ -1,10 +1,10 @@
 // 모든 날짜·시간은 KST 기준. 예약은 "YYYY-MM-DD" 문자열 + 자정 기준 분(min)으로 저장한다.
 // 서버(Vercel)는 UTC로 돌기 때문에 Date.getHours() 등을 직접 쓰면 안 되고 반드시 이 헬퍼를 쓴다.
 
-export const OPEN_MIN = 8 * 60; // 08:00
+export const OPEN_MIN = 9 * 60; // 09:00 (사용자 확정: 시작시간 09:00)
 export const CLOSE_MIN = 19 * 60; // 19:00
 export const SLOT_MIN = 15;
-export const SLOTS_PER_DAY = (CLOSE_MIN - OPEN_MIN) / SLOT_MIN; // 44
+export const SLOTS_PER_DAY = (CLOSE_MIN - OPEN_MIN) / SLOT_MIN; // 40
 
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 

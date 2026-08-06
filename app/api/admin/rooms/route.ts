@@ -17,7 +17,7 @@ export async function GET() {
       number: r.number,
       floor: r.floor,
       capacity: r.capacity,
-      equipment: r.equipment,
+      description: r.description,
       sortOrder: r.sortOrder,
       active: r.active,
       reservationCount: r._count.reservations,
@@ -29,7 +29,7 @@ const createSchema = z.object({
   number: z.string().trim().min(1).max(10),
   floor: z.number().int().min(1).max(200),
   capacity: z.number().int().min(1).max(500).nullable().default(null),
-  equipment: z.string().trim().max(100).nullable().default(null),
+  description: z.string().trim().max(500).nullable().default(null),
 });
 
 export async function POST(req: NextRequest) {

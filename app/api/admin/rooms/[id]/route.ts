@@ -7,7 +7,7 @@ const patchSchema = z.object({
   number: z.string().trim().min(1).max(10).optional(),
   floor: z.number().int().min(1).max(200).optional(),
   capacity: z.number().int().min(1).max(500).nullable().optional(),
-  equipment: z.string().trim().max(100).nullable().optional(),
+  description: z.string().trim().max(500).nullable().optional(),
   sortOrder: z.number().int().optional(),
   active: z.boolean().optional(),
 });

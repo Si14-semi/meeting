@@ -87,7 +87,7 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
       return null;
     }
     if (startMin < OPEN_MIN || endMin > CLOSE_MIN) {
-      setError("예약은 08:00~19:00 사이에서 가능합니다.");
+      setError(`예약은 ${minToLabel(OPEN_MIN)}~${minToLabel(CLOSE_MIN)} 사이에서 가능합니다.`);
       return null;
     }
     if (startMin >= endMin) {
@@ -325,7 +325,7 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
                 id="rv-start"
                 type="time"
                 step={SLOT_MIN * 60}
-                min="08:00"
+                min="09:00"
                 max="19:00"
                 list="rv-times"
                 value={startLabel}
@@ -339,7 +339,7 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
                 id="rv-end"
                 type="time"
                 step={SLOT_MIN * 60}
-                min="08:15"
+                min="09:15"
                 max="19:00"
                 list="rv-times"
                 value={endLabel}

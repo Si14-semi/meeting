@@ -3,7 +3,7 @@ export type Room = {
   number: string;
   floor: number;
   capacity: number | null;
-  equipment: string | null;
+  description: string | null;
 };
 
 export type ReservationDTO = {

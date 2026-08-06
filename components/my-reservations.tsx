@@ -1,18 +1,22 @@
 "use client";
 
-// 내 예약 모아보기 — 다가오는 예약(가까운 순) + 지난 예약 구분. 여기서도 수정 가능.
+// 내 예약 모아보기 — 다가오는 예약(가까운 순) + 지난 예약 구분.
+// 클릭=선택, 더블클릭=수정, 이동 아이콘=예약 현황에서 보기.
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { cn, Spinner } from "@/components/ui";
 import { ReservationList } from "@/components/reservation-list";
 import { ReservationModal } from "@/components/board/reservation-modal";
 import type { Me, ReservationDTO, Room } from "@/components/board/types";
 
 export function MyReservations({ me }: { me: Me }) {
+  const router = useRouter();
   const [upcoming, setUpcoming] = useState<ReservationDTO[] | null>(null);
   const [past, setPast] = useState<ReservationDTO[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [tab, setTab] = useState<"upcoming" | "past">("upcoming");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState<ReservationDTO | null>(null);
   const [toast, setToast] = useState("");
 
@@ -40,6 +44,13 @@ export function MyReservations({ me }: { me: Me }) {
     setToast(text);
     window.setTimeout(() => setToast(""), 4000);
   }
+
+  const listProps = {
+    selectedId,
+    onSelect: (r: ReservationDTO) => setSelectedId(r.id),
+    onEdit: (r: ReservationDTO) => setEditing(r),
+    onGoto: (r: ReservationDTO) => router.push(`/?date=${r.date}&focus=${r.id}`),
+  };
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-5">
@@ -71,11 +82,16 @@ export function MyReservations({ me }: { me: Me }) {
       ) : tab === "upcoming" ? (
         <ReservationList
           items={upcoming}
-          onSelect={setEditing}
+          {...listProps}
           emptyText="다가오는 예약이 없습니다. 예약 현황에서 회의실을 예약해보세요."
         />
       ) : (
-        <ReservationList items={past} dimmed emptyText="지난 예약이 없습니다." />
+        <ReservationList
+          items={past}
+          {...listProps}
+          dimWhen={() => true}
+          emptyText="지난 예약이 없습니다."
+        />
       )}
 
       {editing && (

@@ -1,21 +1,29 @@
 "use client";
 
 // 예약 검색 — 예약자 이름, 목적, 회의실 번호로 검색. 결과에 날짜+요일 표기.
+// 클릭=선택, 더블클릭=수정, 이동 아이콘=예약 현황에서 보기. 지난 예약은 흐리게.
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { Button, Input, Spinner } from "@/components/ui";
 import { ReservationList } from "@/components/reservation-list";
 import { ReservationModal } from "@/components/board/reservation-modal";
 import type { Me, ReservationDTO, Room } from "@/components/board/types";
-import { Search } from "lucide-react";
+import { kstTodayStr } from "@/lib/time";
+import { Search, X } from "lucide-react";
 
 export function SearchView({ me }: { me: Me }) {
+  const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [q, setQ] = useState("");
   const [results, setResults] = useState<ReservationDTO[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState<ReservationDTO | null>(null);
   const [toast, setToast] = useState("");
+
+  const today = kstTodayStr();
 
   useEffect(() => {
     fetch("/api/rooms")
@@ -40,6 +48,13 @@ export function SearchView({ me }: { me: Me }) {
     }
   }
 
+  function clearSearch() {
+    setQ("");
+    setResults(null);
+    setSelectedId(null);
+    inputRef.current?.focus();
+  }
+
   function showToast(text: string) {
     setToast(text);
     window.setTimeout(() => setToast(""), 4000);
@@ -49,12 +64,26 @@ export function SearchView({ me }: { me: Me }) {
     <main className="mx-auto max-w-3xl px-4 py-5">
       <h1 className="text-lg font-bold mb-4">예약 검색</h1>
       <form onSubmit={onSubmit} className="flex gap-2 mb-5">
-        <Input
-          placeholder="예약자 이름, 예약 목적, 회의실 번호로 검색"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          autoFocus
-        />
+        <div className="relative flex-1">
+          <Input
+            ref={inputRef}
+            placeholder="예약자 이름, 예약 목적, 회의실 번호로 검색"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            autoFocus
+            className="pr-9"
+          />
+          {q && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 cursor-pointer"
+              aria-label="검색어 지우기"
+            >
+              <X size={15} />
+            </button>
+          )}
+        </div>
         <Button type="submit" disabled={loading || !q.trim()} className="shrink-0">
           {loading ? <Spinner /> : <Search size={15} />}
           검색
@@ -69,7 +98,11 @@ export function SearchView({ me }: { me: Me }) {
           </p>
           <ReservationList
             items={results}
-            onSelect={setEditing}
+            selectedId={selectedId}
+            onSelect={(r) => setSelectedId(r.id)}
+            onEdit={(r) => setEditing(r)}
+            onGoto={(r) => router.push(`/?date=${r.date}&focus=${r.id}`)}
+            dimWhen={(r) => r.date < today}
             emptyText="검색 결과가 없습니다."
           />
         </>

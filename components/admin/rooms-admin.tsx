@@ -1,6 +1,7 @@
 "use client";
 
-// 회의실 관리 — 추가/번호·층 변경/메타정보(수용인원·장비)/사용중지/삭제
+// 회의실 관리 — 추가/번호·층 변경/메타정보(수용인원·자유 정보)/사용중지/삭제
+// 자유 정보(description)는 예약 화면에서 호수 hover/클릭 시 표시된다.
 
 import { useCallback, useEffect, useState } from "react";
 import { Alert, Button, Input, cn } from "@/components/ui";
@@ -11,7 +12,7 @@ type AdminRoom = {
   number: string;
   floor: number;
   capacity: number | null;
-  equipment: string | null;
+  description: string | null;
   sortOrder: number;
   active: boolean;
   reservationCount: number;
@@ -20,7 +21,7 @@ type AdminRoom = {
 export function RoomsAdmin() {
   const [rooms, setRooms] = useState<AdminRoom[]>([]);
   const [error, setError] = useState("");
-  const [newRoom, setNewRoom] = useState({ number: "", floor: "", capacity: "", equipment: "" });
+  const [newRoom, setNewRoom] = useState({ number: "", floor: "", capacity: "", description: "" });
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -58,14 +59,14 @@ export function RoomsAdmin() {
           number: newRoom.number.trim(),
           floor: parseInt(newRoom.floor),
           capacity: newRoom.capacity ? parseInt(newRoom.capacity) : null,
-          equipment: newRoom.equipment.trim() || null,
+          description: newRoom.description.trim() || null,
         }),
       });
       if (!res.ok) {
         setError((await res.json()).error ?? "추가에 실패했습니다.");
         return;
       }
-      setNewRoom({ number: "", floor: "", capacity: "", equipment: "" });
+      setNewRoom({ number: "", floor: "", capacity: "", description: "" });
       load();
     } finally {
       setBusy(false);
@@ -111,9 +112,9 @@ export function RoomsAdmin() {
             className="w-24"
           />
           <Input
-            placeholder="장비 (예: 모니터, 화이트보드)"
-            value={newRoom.equipment}
-            onChange={(e) => setNewRoom({ ...newRoom, equipment: e.target.value })}
+            placeholder="회의실 정보 자유 입력 (예: 빔프로젝터, 화이트보드, 화상회의 장비)"
+            value={newRoom.description}
+            onChange={(e) => setNewRoom({ ...newRoom, description: e.target.value })}
             className="flex-1 min-w-40"
           />
           <Button onClick={addRoom} disabled={busy}>
@@ -149,13 +150,13 @@ function RoomRow({
     number: room.number,
     floor: String(room.floor),
     capacity: room.capacity ? String(room.capacity) : "",
-    equipment: room.equipment ?? "",
+    description: room.description ?? "",
   });
   const dirty =
     edit.number !== room.number ||
     edit.floor !== String(room.floor) ||
     edit.capacity !== (room.capacity ? String(room.capacity) : "") ||
-    edit.equipment !== (room.equipment ?? "");
+    edit.description !== (room.description ?? "");
 
   return (
     <div className="flex flex-wrap items-center gap-2 px-4 py-3">
@@ -180,12 +181,13 @@ function RoomRow({
         className="w-20 h-9"
         aria-label="수용 인원"
       />
-      <Input
-        value={edit.equipment}
-        placeholder="장비"
-        onChange={(e) => setEdit({ ...edit, equipment: e.target.value })}
-        className="flex-1 min-w-32 h-9"
-        aria-label="장비"
+      <textarea
+        value={edit.description}
+        placeholder="회의실 정보 (자유 입력, 여러 줄 가능)"
+        onChange={(e) => setEdit({ ...edit, description: e.target.value })}
+        rows={1}
+        className="flex-1 min-w-32 rounded-lg border border-line bg-white px-3 py-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+        aria-label="회의실 정보"
       />
       <span className="text-[12px] text-gray-400 w-16 text-right">예약 {room.reservationCount}건</span>
       {dirty && (
@@ -196,7 +198,7 @@ function RoomRow({
               number: edit.number.trim(),
               floor: parseInt(edit.floor) || room.floor,
               capacity: edit.capacity ? parseInt(edit.capacity) : null,
-              equipment: edit.equipment.trim() || null,
+              description: edit.description.trim() || null,
             })
           }
         >

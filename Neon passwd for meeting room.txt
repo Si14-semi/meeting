@@ -1,0 +1,3 @@
+Neon passwd for meeting room: 
+neondb_owner:
+npg_tebk9dcNpCB5
