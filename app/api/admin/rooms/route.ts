@@ -16,6 +16,7 @@ export async function GET() {
       id: r.id,
       number: r.number,
       floor: r.floor,
+      alias: r.alias,
       capacity: r.capacity,
       description: r.description,
       sortOrder: r.sortOrder,
@@ -28,6 +29,7 @@ export async function GET() {
 const createSchema = z.object({
   number: z.string().trim().min(1).max(10),
   floor: z.number().int().min(1).max(200),
+  alias: z.string().trim().max(30).nullable().default(null),
   capacity: z.number().int().min(1).max(500).nullable().default(null),
   description: z.string().trim().max(500).nullable().default(null),
 });

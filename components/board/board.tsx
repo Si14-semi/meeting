@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Button, Modal, Spinner, cn } from "@/components/ui";
 import { MonthCalendar } from "@/components/board/calendar";
-import { ReservationGrid } from "@/components/board/grid";
+import { GridHeader, ReservationGrid } from "@/components/board/grid";
 import { ReservationModal, type ModalState } from "@/components/board/reservation-modal";
 import type { ConflictInfo, Holiday, Me, ReservationDTO, Room } from "@/components/board/types";
 import { addDays, formatDateWithWeekday, isValidDateStr, kstTodayStr, minToLabel } from "@/lib/time";
@@ -368,6 +368,12 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
                 </button>
               ))}
             </div>
+            {/* 회의실행: 스와이프 영역 밖에 sticky로 고정 (transform과 sticky는 공존 불가) */}
+            {floors[activeFloorIdx] && (
+              <div className="sticky top-14 z-30 rounded-t-xl border border-line border-b-line-strong bg-gray-50 overflow-hidden">
+                <GridHeader rooms={floors[activeFloorIdx].rooms} onRoomInfo={setInfoRoom} />
+              </div>
+            )}
             <div
               className="overflow-hidden"
               onTouchStart={onTouchStart}
@@ -379,12 +385,13 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
                 style={{ transform: `translateX(-${activeFloorIdx * 100}%)` }}
               >
                 {floors.map((f) => (
-                  <div key={f.floor} className="w-full shrink-0 px-0.5">
+                  <div key={f.floor} className="w-full shrink-0">
                     <ReservationGrid
                       rooms={f.rooms}
                       slotHeight={18}
                       minColWidth={72}
                       stickyHeader={false}
+                      hideHeader
                       {...gridShared}
                     />
                   </div>
@@ -415,7 +422,8 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
         <Modal open onClose={() => setInfoRoom(null)} title={`${infoRoom.number}호`} maxWidth="max-w-xs">
           <div className="space-y-2.5 text-sm text-gray-700">
             <p className="flex items-center gap-2">
-              <DoorOpen size={15} className="text-accent" /> {infoRoom.floor}층 {infoRoom.number}호
+              <DoorOpen size={15} className="text-accent" /> {infoRoom.floor}층
+              {infoRoom.alias ? ` ${infoRoom.alias}` : ""}
             </p>
             {infoRoom.capacity && (
               <p className="flex items-center gap-2">

@@ -47,7 +47,7 @@ export function MyReservations({ me }: { me: Me }) {
 
   const listProps = {
     selectedId,
-    onSelect: (r: ReservationDTO) => setSelectedId(r.id),
+    onSelect: (r: ReservationDTO) => setSelectedId((prev) => (prev === r.id ? null : r.id)),
     onEdit: (r: ReservationDTO) => setEditing(r),
     onGoto: (r: ReservationDTO) => router.push(`/?date=${r.date}&focus=${r.id}`),
   };

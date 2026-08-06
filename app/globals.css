@@ -49,10 +49,11 @@ body {
   background: transparent;
 }
 
-/* 모바일에서 그리드 드래그 방지 + 스크롤 허용 */
+/* 모바일에서 그리드 드래그 방지 + 스크롤/핀치줌 허용, 더블탭 확대만 차단 (더블탭=예약창) */
 .reservation-grid {
   -webkit-user-select: none;
   user-select: none;
+  touch-action: manipulation;
 }
 
 @keyframes fade-in-up {

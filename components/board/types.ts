@@ -2,6 +2,7 @@ export type Room = {
   id: number;
   number: string;
   floor: number;
+  alias: string | null;
   capacity: number | null;
   description: string | null;
 };

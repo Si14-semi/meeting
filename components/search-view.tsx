@@ -12,6 +12,8 @@ import type { Me, ReservationDTO, Room } from "@/components/board/types";
 import { kstTodayStr } from "@/lib/time";
 import { Search, X } from "lucide-react";
 
+const SEARCH_KEY = "meeting.search.q";
+
 export function SearchView({ me }: { me: Me }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -30,12 +32,16 @@ export function SearchView({ me }: { me: Me }) {
       .then((r) => r.json())
       .then((d) => setRooms(d.rooms ?? []))
       .catch(() => {});
+    // 예약 현황에 다녀와도 검색 상태 유지: 저장된 검색어로 자동 재검색 (결과는 최신)
+    const saved = sessionStorage.getItem(SEARCH_KEY);
+    if (saved) {
+      setQ(saved);
+      runSearch(saved);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    const query = q.trim();
-    if (!query) return;
+  async function runSearch(query: string) {
     setLoading(true);
     try {
       const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
@@ -48,10 +54,19 @@ export function SearchView({ me }: { me: Me }) {
     }
   }
 
+  function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    const query = q.trim();
+    if (!query) return;
+    sessionStorage.setItem(SEARCH_KEY, query);
+    runSearch(query);
+  }
+
   function clearSearch() {
     setQ("");
     setResults(null);
     setSelectedId(null);
+    sessionStorage.removeItem(SEARCH_KEY);
     inputRef.current?.focus();
   }
 
@@ -99,7 +114,7 @@ export function SearchView({ me }: { me: Me }) {
           <ReservationList
             items={results}
             selectedId={selectedId}
-            onSelect={(r) => setSelectedId(r.id)}
+            onSelect={(r) => setSelectedId((prev) => (prev === r.id ? null : r.id))}
             onEdit={(r) => setEditing(r)}
             onGoto={(r) => router.push(`/?date=${r.date}&focus=${r.id}`)}
             dimWhen={(r) => r.date < today}

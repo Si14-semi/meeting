@@ -11,6 +11,7 @@ type AdminRoom = {
   id: number;
   number: string;
   floor: number;
+  alias: string | null;
   capacity: number | null;
   description: string | null;
   sortOrder: number;
@@ -21,7 +22,7 @@ type AdminRoom = {
 export function RoomsAdmin() {
   const [rooms, setRooms] = useState<AdminRoom[]>([]);
   const [error, setError] = useState("");
-  const [newRoom, setNewRoom] = useState({ number: "", floor: "", capacity: "", description: "" });
+  const [newRoom, setNewRoom] = useState({ number: "", floor: "", alias: "", capacity: "", description: "" });
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -58,6 +59,7 @@ export function RoomsAdmin() {
         body: JSON.stringify({
           number: newRoom.number.trim(),
           floor: parseInt(newRoom.floor),
+          alias: newRoom.alias.trim() || null,
           capacity: newRoom.capacity ? parseInt(newRoom.capacity) : null,
           description: newRoom.description.trim() || null,
         }),
@@ -66,7 +68,7 @@ export function RoomsAdmin() {
         setError((await res.json()).error ?? "추가에 실패했습니다.");
         return;
       }
-      setNewRoom({ number: "", floor: "", capacity: "", description: "" });
+      setNewRoom({ number: "", floor: "", alias: "", capacity: "", description: "" });
       load();
     } finally {
       setBusy(false);
@@ -103,6 +105,12 @@ export function RoomsAdmin() {
             value={newRoom.floor}
             onChange={(e) => setNewRoom({ ...newRoom, floor: e.target.value })}
             className="w-20"
+          />
+          <Input
+            placeholder="호칭 (예: 1호)"
+            value={newRoom.alias}
+            onChange={(e) => setNewRoom({ ...newRoom, alias: e.target.value })}
+            className="w-28"
           />
           <Input
             placeholder="수용 인원"
@@ -149,12 +157,14 @@ function RoomRow({
   const [edit, setEdit] = useState({
     number: room.number,
     floor: String(room.floor),
+    alias: room.alias ?? "",
     capacity: room.capacity ? String(room.capacity) : "",
     description: room.description ?? "",
   });
   const dirty =
     edit.number !== room.number ||
     edit.floor !== String(room.floor) ||
+    edit.alias !== (room.alias ?? "") ||
     edit.capacity !== (room.capacity ? String(room.capacity) : "") ||
     edit.description !== (room.description ?? "");
 
@@ -172,6 +182,13 @@ function RoomRow({
         onChange={(e) => setEdit({ ...edit, floor: e.target.value })}
         className="w-16 h-9"
         aria-label="층"
+      />
+      <Input
+        value={edit.alias}
+        placeholder="호칭"
+        onChange={(e) => setEdit({ ...edit, alias: e.target.value })}
+        className="w-20 h-9"
+        aria-label="호칭"
       />
       <Input
         value={edit.capacity}
@@ -197,6 +214,7 @@ function RoomRow({
             onPatch(room.id, {
               number: edit.number.trim(),
               floor: parseInt(edit.floor) || room.floor,
+              alias: edit.alias.trim() || null,
               capacity: edit.capacity ? parseInt(edit.capacity) : null,
               description: edit.description.trim() || null,
             })

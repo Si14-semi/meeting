@@ -6,10 +6,11 @@ export const metadata: Metadata = {
   description: "Dongwoon Anatech 회의실 예약 시스템",
 };
 
+// 핀치줌 허용 (maximumScale 제한 없음) — 그리드 안 더블탭 확대는
+// .reservation-grid의 touch-action: manipulation이 막는다 (더블탭=예약창과 충돌 방지)
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
 };
 
 export default function RootLayout({

@@ -321,6 +321,8 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
             </div>
             <div>
               <Label htmlFor="rv-start">시작</Label>
+              {/* 데스크톱: 직접 입력 가능한 time input / 모바일: 15분 단위 드롭다운
+                  (모바일 네이티브 시간 선택기는 step을 무시하고 1분 단위를 보여주기 때문) */}
               <Input
                 id="rv-start"
                 type="time"
@@ -331,7 +333,21 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
                 value={startLabel}
                 onChange={(e) => setStartLabel(e.target.value)}
                 disabled={readOnly}
+                className="hidden sm:block"
               />
+              <Select
+                aria-label="시작 시간"
+                value={startLabel}
+                onChange={(e) => setStartLabel(e.target.value)}
+                disabled={readOnly}
+                className="sm:hidden"
+              >
+                {timeOptions.slice(0, -1).map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </Select>
             </div>
             <div>
               <Label htmlFor="rv-end">종료</Label>
@@ -345,7 +361,21 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
                 value={endLabel}
                 onChange={(e) => setEndLabel(e.target.value)}
                 disabled={readOnly}
+                className="hidden sm:block"
               />
+              <Select
+                aria-label="종료 시간"
+                value={endLabel}
+                onChange={(e) => setEndLabel(e.target.value)}
+                disabled={readOnly}
+                className="sm:hidden"
+              >
+                {timeOptions.slice(1).map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </Select>
               <datalist id="rv-times">
                 {timeOptions.map((t) => (
                   <option key={t} value={t} />
