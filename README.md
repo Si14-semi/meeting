@@ -65,9 +65,10 @@ npm run dev
    - `AUTH_SECRET`: `openssl rand -base64 32` 등으로 생성한 무작위 문자열
    - `CRON_SECRET`: 무작위 문자열 (Vercel Cron 인증용)
    - `ADMIN_EMAIL`, `ADMIN_INITIAL_PASSWORD`: 최초 관리자 계정
-5. **DB 마이그레이션 + 시드** (로컬 PC에서 Neon을 향해 1회 실행):
-   ```bash
-   set DATABASE_URL=<Neon 연결 문자열>
+5. **DB 마이그레이션 + 시드** (로컬 PC에서 Neon을 향해 1회 실행, PowerShell 기준 — 연결 문자열에 `&`가 있으므로 반드시 큰따옴표로 감쌀 것):
+   ```powershell
+   $env:DATABASE_URL = "<Neon 연결 문자열>"
+   $env:ADMIN_INITIAL_PASSWORD = "<관리자 초기 비밀번호>"
    npx prisma migrate deploy
    npx prisma db seed
    ```
