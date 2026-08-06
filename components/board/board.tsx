@@ -402,7 +402,7 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
                     <ReservationGrid
                       rooms={f.rooms}
                       slotHeight={18}
-                      minColWidth={72}
+                      minColWidth={0} // 완전 유동폭 — 좁은 폰(360px)에서도 가로 오버플로 없이 화면에 딱 맞게
                       stickyHeader={false}
                       hideHeader
                       {...gridShared}
