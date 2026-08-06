@@ -48,6 +48,8 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
     availableCount: number;
   } | null>(null);
   const [activeFloorIdx, setActiveFloorIdx] = useState(0);
+  // 좁은 화면(모바일 가로 회전 등)에서는 칼럼 최소폭을 없애 8실이 스크롤 없이 들어가게
+  const [fitCols, setFitCols] = useState(false);
   const calRef = useRef<HTMLDivElement>(null);
   const focusScrolled = useRef(false);
   const touchState = useRef<{ x: number; y: number; axis: "none" | "h" | "v" } | null>(null);
@@ -92,6 +94,17 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
       window.removeEventListener("focus", onFocus);
     };
   }, [date, fetchReservations]);
+
+  useEffect(() => {
+    const update = () => setFitCols(window.innerWidth < 1024);
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("orientationchange", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("orientationchange", update);
+    };
+  }, []);
 
   // 내 예약/검색에서 "이동"으로 진입 시 해당 예약으로 스크롤
   useEffect(() => {
@@ -346,7 +359,7 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
             <ReservationGrid
               rooms={rooms}
               slotHeight={27}
-              minColWidth={110}
+              minColWidth={fitCols ? 0 : 110}
               stickyHeader
               {...gridShared}
             />
@@ -370,7 +383,7 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
             </div>
             {/* 회의실행: 스와이프 영역 밖에 sticky로 고정 (transform과 sticky는 공존 불가) */}
             {floors[activeFloorIdx] && (
-              <div className="sticky top-14 z-30 rounded-t-xl border border-line border-b-line-strong bg-gray-50 overflow-hidden">
+              <div className="sticky top-14 z-30 rounded-t-xl border border-line border-b-line-strong bg-gray-100 overflow-hidden">
                 <GridHeader rooms={floors[activeFloorIdx].rooms} onRoomInfo={setInfoRoom} />
               </div>
             )}

@@ -2,7 +2,7 @@
 
 // 공용 UI 프리미티브 — 프로젝트 전반에서 동일한 룩앤필을 유지한다.
 
-import { forwardRef, useEffect, type ReactNode } from "react";
+import { forwardRef, useEffect, useRef, useState, type ReactNode } from "react";
 
 export function cn(...classes: (string | false | null | undefined)[]) {
   return classes.filter(Boolean).join(" ");
@@ -132,22 +132,46 @@ export function Modal({
   title,
   children,
   maxWidth = "max-w-md",
+  closeOnBackdrop = true,
+  draggable = false,
+  lightBackdrop = false,
 }: {
   open: boolean;
   onClose: () => void;
   title?: ReactNode;
   children: ReactNode;
   maxWidth?: string;
+  /** 바깥(배경) 클릭으로 닫기 — 예약창은 false (실수 방지) */
+  closeOnBackdrop?: boolean;
+  /** 제목줄을 잡고 창 이동 (데스크톱 마우스 전용) */
+  draggable?: boolean;
+  /** 배경 어둡기를 낮춰 뒤 화면이 잘 보이게 */
+  lightBackdrop?: boolean;
 }) {
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const dragStart = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
+    function onMove(e: PointerEvent) {
+      const s = dragStart.current;
+      if (!s) return;
+      setPos({ x: s.x + e.clientX - s.px, y: s.y + e.clientY - s.py });
+    }
+    function onUp() {
+      dragStart.current = null;
+    }
     document.addEventListener("keydown", onKey);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
       document.body.style.overflow = "";
     };
   }, [open, onClose]);
@@ -155,9 +179,12 @@ export function Modal({
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 animate-fade-in p-0 sm:p-4"
+      className={cn(
+        "fixed inset-0 z-50 flex items-end sm:items-center justify-center animate-fade-in p-0 sm:p-4",
+        lightBackdrop ? "bg-black/15" : "bg-black/40"
+      )}
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (closeOnBackdrop && e.target === e.currentTarget) onClose();
       }}
     >
       <div
@@ -166,9 +193,21 @@ export function Modal({
           "rounded-t-2xl sm:rounded-2xl max-h-[92dvh] overflow-y-auto thin-scroll",
           maxWidth
         )}
+        style={pos.x !== 0 || pos.y !== 0 ? { transform: `translate(${pos.x}px, ${pos.y}px)` } : undefined}
       >
         {title !== undefined && (
-          <div className="flex items-center justify-between px-5 pt-4 pb-1">
+          <div
+            className={cn(
+              "flex items-center justify-between px-5 pt-4 pb-1",
+              draggable && "sm:cursor-move select-none"
+            )}
+            onPointerDown={(e) => {
+              if (!draggable || e.pointerType !== "mouse" || e.button !== 0) return;
+              if ((e.target as HTMLElement).closest("button")) return;
+              dragStart.current = { px: e.clientX, py: e.clientY, x: pos.x, y: pos.y };
+              e.preventDefault();
+            }}
+          >
             <h2 className="text-base font-semibold">{title}</h2>
             <button
               onClick={onClose}

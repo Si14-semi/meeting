@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Reserved meeting room">
+  <defs>
+    <linearGradient id="bg" x1="132" y1="92" x2="892" y2="938" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#3730A3"/>
+    </linearGradient>
+    <linearGradient id="door" x1="380" y1="306" x2="672" y2="730" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#EEF2FF"/>
+    </linearGradient>
+    <filter id="badge-shadow" x="580" y="570" width="320" height="320" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#1E1B4B" flood-opacity=".28"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+
+  <!-- Room frame -->
+  <path d="M286 760V330C286 268 336 218 398 218H688C716 218 738 240 738 268V760"
+        fill="none" stroke="#FFFFFF" stroke-width="64" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M254 760H780" stroke="#FFFFFF" stroke-width="64" stroke-linecap="round"/>
+
+  <!-- Slightly open door adds depth while remaining legible at favicon size. -->
+  <path d="M382 330L666 294V716L382 676Z" fill="url(#door)"/>
+  <path d="M382 330L666 294V716L382 676Z" fill="none" stroke="#C7D2FE" stroke-width="18" stroke-linejoin="round"/>
+  <circle cx="600" cy="500" r="28" fill="#4F46E5"/>
+
+  <!-- Compact confirmation badge -->
+  <g filter="url(#badge-shadow)">
+    <circle cx="728" cy="710" r="112" fill="#10B981" stroke="#FFFFFF" stroke-width="24"/>
+    <path d="M672 710L714 752L790 668" fill="none" stroke="#FFFFFF" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

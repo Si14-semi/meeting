@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="d" x1="116" y1="92" x2="905" y2="928" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4F46E5"/><stop offset="1" stop-color="#312E81"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="#F5F3FF"/>
+  <rect x="138" y="138" width="748" height="748" rx="224" fill="url(#d)"/>
+  <!-- M shaped meeting table / DW Meeting monogram -->
+  <path d="M282 686V370C282 329 315 296 356 296H372L512 482L652 296H668C709 296 742 329 742 370V686" fill="none" stroke="#FFF" stroke-width="88" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="282" cy="762" r="42" fill="#A5B4FC"/>
+  <circle cx="742" cy="762" r="42" fill="#A5B4FC"/>
+  <circle cx="512" cy="270" r="42" fill="#10B981" stroke="#FFF" stroke-width="18"/>
+</svg>

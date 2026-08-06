@@ -16,7 +16,7 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { cn } from "@/components/ui";
-import { colorForUser } from "@/components/board/palette";
+import { colorForRoom } from "@/components/board/palette";
 import type { Me, ReservationDTO, Room } from "@/components/board/types";
 import { OPEN_MIN, CLOSE_MIN, SLOT_MIN, SLOTS_PER_DAY, minToLabel } from "@/lib/time";
 import { Repeat } from "lucide-react";
@@ -68,46 +68,61 @@ export function GridHeader({
   const boundaries = useMemo(() => floorBoundaries(rooms), [rooms]);
   const [tip, setTip] = useState<{ room: Room; x: number; y: number } | null>(null);
 
+  const tipColor = tip ? colorForRoom(tip.room.id) : null;
+
   return (
-    <div className="flex bg-gray-50">
-      <div style={{ width: GUTTER_W }} className="shrink-0 sticky left-0 z-10 bg-gray-50" aria-hidden />
+    <div className="flex bg-gray-100/80">
+      <div
+        style={{ width: GUTTER_W }}
+        className="shrink-0 sticky left-0 z-10 bg-gray-100/80 flex items-center justify-center"
+        aria-hidden
+      >
+        <span className="text-[12px] font-semibold text-gray-500">시간</span>
+      </div>
       <div className="flex flex-1 relative">
-        {rooms.map((room, i) => (
-          <button
-            key={room.id}
-            onClick={() => onRoomInfo(room)}
-            onMouseEnter={(e) => {
-              if (!window.matchMedia("(hover: hover)").matches) return;
-              const rect = e.currentTarget.getBoundingClientRect();
-              setTip({ room, x: rect.left + rect.width / 2, y: rect.bottom });
-            }}
-            onMouseLeave={() => setTip(null)}
-            className={cn(
-              "flex-1 py-2 text-center cursor-pointer hover:bg-accent-soft transition-colors group",
-              "border-l border-line",
-              boundaries.includes(i) && "border-l-transparent"
-            )}
-          >
-            <span className="text-sm font-bold text-gray-800 group-hover:text-accent">
-              {room.number}호
-            </span>
-          </button>
-        ))}
+        {rooms.map((room, i) => {
+          const color = colorForRoom(room.id);
+          return (
+            <button
+              key={room.id}
+              onClick={() => onRoomInfo(room)}
+              onMouseEnter={(e) => {
+                if (!window.matchMedia("(hover: hover)").matches) return;
+                const rect = e.currentTarget.getBoundingClientRect();
+                setTip({ room, x: rect.left + rect.width / 2, y: rect.bottom });
+              }}
+              onMouseLeave={() => setTip(null)}
+              className={cn(
+                "relative flex-1 min-w-0 py-2 text-center cursor-pointer hover:bg-white/70 transition-colors group",
+                "border-l border-line",
+                boundaries.includes(i) && "border-l-transparent"
+              )}
+            >
+              <span className="text-sm font-bold text-gray-800">{room.number}호</span>
+              {/* 회의실 고유색 언더라인 */}
+              <span
+                aria-hidden
+                className="absolute inset-x-0 bottom-0 h-[3px]"
+                style={{ background: color.border }}
+              />
+            </button>
+          );
+        })}
         <FloorDividers boundaries={boundaries} count={rooms.length} />
       </div>
-      {/* hover 툴팁 — overflow 클리핑을 피해 fixed로 렌더 */}
-      {tip && (
+      {/* hover 툴팁 — overflow 클리핑을 피해 fixed로, 해당 회의실 파스텔색 배경 */}
+      {tip && tipColor && (
         <div
-          className="fixed z-[70] -translate-x-1/2 bg-gray-900 text-white text-[12px] leading-relaxed rounded-lg px-3 py-2 w-max max-w-52 whitespace-pre-line text-left shadow-lg pointer-events-none"
-          style={{ left: tip.x, top: tip.y + 6 }}
+          className="fixed z-[70] -translate-x-1/2 text-[12px] leading-relaxed rounded-lg border px-3 py-2 w-max max-w-52 text-left shadow-md pointer-events-none"
+          style={{ left: tip.x, top: tip.y + 6, background: tipColor.bg, borderColor: tipColor.border, color: tipColor.text }}
         >
-          <b>
-            {tip.room.number}호 · {tip.room.floor}층{tip.room.alias ? ` ${tip.room.alias}` : ""}
-          </b>
-          {"\n"}
-          {[tip.room.capacity ? `수용 인원 ${tip.room.capacity}명` : null, tip.room.description]
-            .filter(Boolean)
-            .join("\n") || "등록된 정보 없음"}
+          <div className="font-bold">{tip.room.number}호</div>
+          <div>
+            {tip.room.floor}층{tip.room.alias ? ` ${tip.room.alias}` : ""}
+          </div>
+          {tip.room.capacity && <div>수용 인원 {tip.room.capacity}명</div>}
+          {tip.room.description && <div className="whitespace-pre-line">{tip.room.description}</div>}
+          {!tip.room.capacity && !tip.room.description && <div>등록된 정보 없음</div>}
         </div>
       )}
     </div>
@@ -280,10 +295,11 @@ export function ReservationGrid({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // 시간 라벨: 10:00~18:00 (09:00·19:00 미표기 — 사용자 확정)
+  // 시간 라벨: 09:00~18:00 — 각 시간 구간 첫 칸 안쪽에 배치해 09:00도 잘림 없이 표기
+  // (19:00은 축에 미표기 — 사용자 확정)
   const hourLabels = useMemo(() => {
     const marks: number[] = [];
-    for (let m = OPEN_MIN + 60; m < CLOSE_MIN; m += 60) marks.push(m);
+    for (let m = OPEN_MIN; m < CLOSE_MIN; m += 60) marks.push(m);
     return marks;
   }, []);
 
@@ -318,8 +334,8 @@ export function ReservationGrid({
         <div
           ref={headScrollRef}
           className={cn(
-            "overflow-hidden rounded-t-xl border-b border-line-strong bg-gray-50",
-            stickyHeader && "sticky top-14 z-30 shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
+            "overflow-hidden rounded-t-xl border-b border-line-strong bg-gray-100/80",
+            stickyHeader && "sticky top-14 z-30"
           )}
         >
           <div style={{ minWidth: minTotalWidth }}>
@@ -334,17 +350,17 @@ export function ReservationGrid({
         className="overflow-x-auto thin-scroll rounded-b-xl"
       >
         <div className="flex" style={{ minWidth: minTotalWidth }}>
-          {/* 시간 눈금 (가로 스크롤 시 고정) */}
+          {/* 시간 눈금 (가로 스크롤 시 고정, 연한 회색 음영) */}
           <div
             style={{ width: GUTTER_W, height: bodyHeight }}
-            className="shrink-0 sticky left-0 z-20 bg-card relative"
+            className="shrink-0 sticky left-0 z-20 bg-gray-100/80 relative"
             aria-hidden
           >
             {hourLabels.map((m) => (
               <div
                 key={m}
-                className="absolute right-2 text-[13px] font-semibold text-gray-900 leading-none -translate-y-1/2"
-                style={{ top: ((m - OPEN_MIN) / SLOT_MIN) * slotHeight }}
+                className="absolute right-2 text-[13px] font-semibold text-gray-900 leading-none"
+                style={{ top: ((m - OPEN_MIN) / SLOT_MIN) * slotHeight + 3 }}
               >
                 {minToLabel(m)}
               </div>
@@ -375,7 +391,7 @@ export function ReservationGrid({
                 <div
                   key={room.id}
                   className={cn(
-                    "flex-1 relative border-l border-line",
+                    "flex-1 min-w-0 relative border-l border-line",
                     boundaries.includes(idx) && "border-l-transparent"
                   )}
                   onPointerDown={(e) => {
@@ -408,7 +424,6 @@ export function ReservationGrid({
                     <ReservationBlock
                       key={r.id}
                       r={r}
-                      me={me}
                       slotHeight={slotHeight}
                       editable={canEdit(r)}
                       selected={selectedId === r.id}
@@ -500,7 +515,6 @@ export function ReservationGrid({
 
 function ReservationBlock({
   r,
-  me,
   slotHeight,
   editable,
   selected,
@@ -510,7 +524,6 @@ function ReservationBlock({
   onDoubleClick,
 }: {
   r: ReservationDTO;
-  me: Me;
   slotHeight: number;
   editable: boolean;
   selected: boolean;
@@ -520,10 +533,11 @@ function ReservationBlock({
   onDoubleClick: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const color = colorForUser(r.userId);
+  const color = colorForRoom(r.roomId);
   const top = ((r.startMin - OPEN_MIN) / SLOT_MIN) * slotHeight;
   const height = ((r.endMin - r.startMin) / SLOT_MIN) * slotHeight;
-  const compact = height <= slotHeight * 2;
+  const slots = (r.endMin - r.startMin) / SLOT_MIN;
+  const dense = slotHeight < 24; // 모바일은 기존 크기 유지
 
   function zoneAt(clientY: number): "move" | "resize-top" | "resize-bottom" {
     const rect = ref.current?.getBoundingClientRect();
@@ -540,18 +554,16 @@ function ReservationBlock({
       data-block
       id={`res-${r.id}`}
       className={cn(
-        "absolute inset-x-0.5 rounded-md border overflow-hidden transition-shadow",
+        "absolute inset-x-0.5 rounded-md border overflow-hidden",
         editable ? "cursor-grab" : "cursor-pointer",
-        selected && "ring-2 ring-accent shadow-md z-10",
+        selected && "ring-2 ring-accent z-10",
         dimmed && "opacity-40"
       )}
       style={{
         top: top + 1,
         height: height - 2,
         background: color.bg,
-        borderColor: r.userId === me.id ? "var(--accent)" : color.border,
-        borderLeftWidth: 3,
-        borderLeftColor: color.text,
+        borderColor: color.border,
         color: color.text,
         paddingLeft: 6,
         paddingRight: 6,
@@ -582,16 +594,18 @@ function ReservationBlock({
         onDoubleClick();
       }}
     >
-      <div className={cn("leading-tight", compact && "flex items-baseline gap-1 truncate")}>
-        <span className="text-[11px] font-bold flex items-center gap-0.5 truncate">
+      {/* 표기 규칙 (사용자 확정): 15분=이름만 / 30분=이름·목적 / 45분+=이름·목적·시간
+          — 생략된 정보는 hover(title)로 확인 */}
+      <div className="leading-tight">
+        <span className={cn("font-bold flex items-center gap-0.5 truncate", dense ? "text-[11px]" : "text-[12px]")}>
           {r.userName}
-          {r.isRecurring && <Repeat size={9} className="shrink-0 opacity-70" />}
+          {r.isRecurring && <Repeat size={dense ? 9 : 10} className="shrink-0 opacity-70" />}
         </span>
-        {r.purpose && (
-          <span className={cn("text-[11px] opacity-80 truncate", !compact && "block")}>{r.purpose}</span>
+        {slots >= 2 && r.purpose && (
+          <span className={cn("truncate block", dense ? "text-[11px]" : "text-[12px]")}>{r.purpose}</span>
         )}
-        {!compact && height > slotHeight * 3 && (
-          <span className="text-[10px] opacity-60 block">
+        {slots >= 3 && (
+          <span className={cn("block", dense ? "text-[10px]" : "text-[11px]")}>
             {minToLabel(r.startMin)}~{minToLabel(r.endMin)}
           </span>
         )}

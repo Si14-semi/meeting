@@ -35,7 +35,7 @@ export function AppHeader({ userName, isAdmin }: Props) {
         <div className="mx-auto max-w-7xl px-4 h-14 flex items-center justify-between gap-3">
           <div className="flex items-center gap-6 min-w-0">
             <Link href="/" className="text-lg font-extrabold tracking-tight text-accent shrink-0">
-              meeting
+              DW meeting
             </Link>
             {/* 데스크톱 내비게이션 */}
             <nav className="hidden sm:flex items-center gap-1">

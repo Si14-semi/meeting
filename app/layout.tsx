@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "meeting — 회의실 예약",
+  title: "DW meeting — 회의실 예약",
   description: "Dongwoon Anatech 회의실 예약 시스템",
 };
 

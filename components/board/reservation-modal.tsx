@@ -221,6 +221,9 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
     <Modal
       open
       onClose={onClose}
+      closeOnBackdrop={false}
+      draggable
+      lightBackdrop
       title={
         readOnly ? (isPast ? "지난 예약" : "예약 정보") : isEdit ? (isForced ? "예약 수정 (관리자)" : "예약 수정") : "회의실 예약"
       }
@@ -302,8 +305,7 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
               >
                 {rooms.map((room) => (
                   <option key={room.id} value={room.id}>
-                    {room.number}호 ({room.floor}층)
-                    {room.capacity ? ` · ${room.capacity}명` : ""}
+                    {room.number}호
                   </option>
                 ))}
               </Select>
