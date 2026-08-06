@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
   --background: #f7f8fa;
   --foreground: #1a1d24;
   --card: #ffffff;
@@ -15,6 +16,8 @@
 /* ===== 다크 테마 =====
    토큰 교체 + Tailwind gray 스케일 반전으로 기존 클래스가 자동으로 다크에 맞게 동작한다. */
 .dark {
+  /* 네이티브 폼 컨트롤(날짜/시간 아이콘, 선택 팝업, 스크롤바)을 다크로 렌더링 → 아이콘이 흰색이 됨 */
+  color-scheme: dark;
   --background: #12141a;
   --foreground: #e6e9ef;
   --card: #1a1d24;
