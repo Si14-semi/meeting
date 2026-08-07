@@ -97,7 +97,8 @@ $xdArgs = @(
     "backups",
     "coverage"
 )
-& robocopy $src $dst /E /XD @xdArgs /XF ".env" ".env.*" /NFL /NDL /NJH /NJS | Out-Null
+# 비밀정보 메모 파일(*passwd*, *.txt 등)은 배포에 불필요 — 유출 방지 차원에서 함께 제외
+& robocopy $src $dst /E /XD @xdArgs /XF ".env" ".env.*" "*passwd*" "*password*" "*.txt" /NFL /NDL /NJH /NJS | Out-Null
 if ($LASTEXITCODE -ge 8) {
     throw "robocopy failed with exit $LASTEXITCODE"
 }
@@ -177,7 +178,19 @@ try {
         Write-Host "  OK — .env excluded" -ForegroundColor Green
     }
 
-    # 5) .next\cache 제외 확인 (번들 크기 방어)
+    # 5) 루트에 비밀정보 의심 파일이 없는지 (passwd/secret 류 이름 또는 루트 .txt)
+    #    — "Neon passwd for meeting room.txt" 가 번들에 섞여 들어갔던 실사고 재발 방지
+    $rootSuspicious = $entries | Where-Object {
+        ($_ -notmatch '/') -and ($_ -match '(?i)passwd|password|secret|credential|\.txt$')
+    }
+    if ($rootSuspicious) {
+        Write-Host "  FAIL — suspicious root file(s) leaked: $($rootSuspicious -join ', ')" -ForegroundColor Red
+        $pass = $false
+    } else {
+        Write-Host "  OK — no secret-looking files at bundle root" -ForegroundColor Green
+    }
+
+    # 6) .next\cache 제외 확인 (번들 크기 방어)
     $cacheEntries = ($entries | Where-Object { $_ -like '.next/cache/*' }).Count
     if ($cacheEntries -gt 0) {
         Write-Host "  FAIL — .next\cache leaked ($cacheEntries entries — bundle bloat)" -ForegroundColor Red

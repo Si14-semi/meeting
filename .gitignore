@@ -35,6 +35,11 @@ yarn-error.log*
 !.env.example
 !.env.onprem.example
 
+# 비밀정보 메모 파일 — 커밋/번들 금지
+*passwd*
+*password*.txt
+Neon*.txt
+
 # vercel
 .vercel
 
