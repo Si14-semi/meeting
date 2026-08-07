@@ -46,6 +46,9 @@ Write-Host ""
 # 0. Build (옵션) — build:onprem = prisma generate + next build (migrate 없음)
 # ============================================================
 if (-not $SkipBuild) {
+    # dev 서버(next dev)가 떠 있으면 네이티브 모듈 잠김으로 npm ci 가 EPERM 실패 → 먼저 종료
+    & "$scriptDir\kill-dev.ps1" -ProjectRoot $src
+
     Write-Host "[1/5] npm ci + npm run build:onprem ..." -ForegroundColor Yellow
 
     Push-Location $src
