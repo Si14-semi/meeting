@@ -592,15 +592,15 @@ function ReservationBlock({
       {/* 표기 규칙 (사용자 확정): 15분=이름만 / 30분=이름·목적 / 45분+=이름·목적·시간
           — 생략된 정보는 hover(title)로 확인 */}
       <div className="leading-tight">
-        <span className={cn("font-bold flex items-center gap-0.5 truncate", dense ? "text-[11px]" : "text-[12px]")}>
+        <span className={cn("font-bold flex items-center gap-0.5 truncate", dense ? "text-[11px]" : "text-[13px]")}>
           {r.userName}
-          {r.isRecurring && <Repeat size={dense ? 9 : 10} className="shrink-0 opacity-70" />}
+          {r.isRecurring && <Repeat size={dense ? 9 : 11} className="shrink-0 opacity-70" />}
         </span>
         {slots >= 2 && r.purpose && (
-          <span className={cn("truncate block", dense ? "text-[11px]" : "text-[12px]")}>{r.purpose}</span>
+          <span className={cn("truncate block", dense ? "text-[11px]" : "text-[13px]")}>{r.purpose}</span>
         )}
         {slots >= 3 && (
-          <span className={cn("block", dense ? "text-[10px]" : "text-[11px]")}>
+          <span className={cn("block", dense ? "text-[10px]" : "text-[12px]")}>
             {minToLabel(r.startMin)}~{minToLabel(r.endMin)}
           </span>
         )}

@@ -353,24 +353,8 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
     <main className="mx-auto max-w-7xl px-3 sm:px-4 pt-2 pb-4">
       {/* 툴바 */}
       <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+        {/* 순서: 달력 → ‹ › → 오늘 (사용자 확정 — 달력 팝오버가 왼쪽 기준이라 모바일에서 잘리지 않음) */}
         <div className="flex items-center gap-1.5">
-          <Button variant="secondary" size="sm" onClick={() => setDate(today)} disabled={isToday}>
-            오늘
-          </Button>
-          <button
-            onClick={() => setDate(addDays(date, -1))}
-            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 cursor-pointer"
-            aria-label="이전 날"
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <button
-            onClick={() => setDate(addDays(date, 1))}
-            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 cursor-pointer"
-            aria-label="다음 날"
-          >
-            <ChevronRight size={18} />
-          </button>
           <div className="relative" ref={calRef}>
             <button
               onClick={() => setCalOpen((v) => !v)}
@@ -397,6 +381,23 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
               </div>
             )}
           </div>
+          <button
+            onClick={() => setDate(addDays(date, -1))}
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 cursor-pointer"
+            aria-label="이전 날"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <button
+            onClick={() => setDate(addDays(date, 1))}
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 cursor-pointer"
+            aria-label="다음 날"
+          >
+            <ChevronRight size={18} />
+          </button>
+          <Button variant="secondary" size="sm" onClick={() => setDate(today)} disabled={isToday}>
+            오늘
+          </Button>
         </div>
         <p className="hidden lg:block text-[12px] text-gray-400">
           클릭=선택 · 더블클릭/드래그=예약 · 예약 더블클릭=수정 · 가장자리 드래그=시간 변경 · Delete=취소
