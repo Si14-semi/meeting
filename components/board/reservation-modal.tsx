@@ -50,8 +50,8 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
   const isTouch = useIsTouch();
   const isEdit = state.mode === "edit";
   const r = isEdit ? state.reservation : null;
-  const isPast = isEdit && r!.date < kstTodayStr();
-  const canWrite = (!isEdit || r!.userId === me.id || me.role === "ADMIN") && !isPast;
+  // 과거 예약도 수정/취소 허용 (사용자 확정) — 권한(본인/관리자)만 체크
+  const canWrite = !isEdit || r!.userId === me.id || me.role === "ADMIN";
   const isForced = isEdit && r!.userId !== me.id && me.role === "ADMIN";
 
   const [roomId, setRoomId] = useState(isEdit ? r!.roomId : state.roomId);
@@ -94,10 +94,6 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
     }
     if (startMin >= endMin) {
       setError("종료 시간이 시작 시간보다 늦어야 합니다.");
-      return null;
-    }
-    if (date < kstTodayStr()) {
-      setError("지난 날짜는 예약할 수 없습니다.");
       return null;
     }
     return { startMin, endMin };
@@ -227,7 +223,7 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
       draggable
       lightBackdrop
       title={
-        readOnly ? (isPast ? "지난 예약" : "예약 정보") : isEdit ? (isForced ? "예약 수정 (관리자)" : "예약 수정") : "회의실 예약"
+        readOnly ? "예약 정보" : isEdit ? (isForced ? "예약 수정 (관리자)" : "예약 수정") : "회의실 예약"
       }
     >
       {/* ----- 적용 범위 선택 (반복 예약 저장/삭제) ----- */}
@@ -318,7 +314,6 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
                 id="rv-date"
                 type="date"
                 value={date}
-                min={readOnly ? undefined : kstTodayStr()}
                 onChange={(e) => setDate(e.target.value)}
                 disabled={readOnly}
                 className={cn("min-w-0", isTouch && "touch-date")}

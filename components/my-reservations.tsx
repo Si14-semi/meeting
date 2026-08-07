@@ -59,7 +59,7 @@ export function MyReservations({ me }: { me: Me }) {
     });
   }, []);
 
-  // Delete = 선택 일괄 취소 / Esc = 해제 (지난 예약은 취소 불가 — 제외)
+  // Delete = 선택 일괄 취소 / Esc = 해제 (과거 예약 포함 가능 — 확인창에 안내)
   useEffect(() => {
     async function onKey(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement)?.tagName;
@@ -70,16 +70,12 @@ export function MyReservations({ me }: { me: Me }) {
       }
       if (e.key !== "Delete" || selectedIds.size === 0 || editing) return;
       const all = [...(upcoming ?? []), ...past];
-      const targets = all.filter((r) => selectedIds.has(r.id));
+      const deletable = all.filter((r) => selectedIds.has(r.id));
+      if (deletable.length === 0) return;
       const today = kstTodayStr();
-      const deletable = targets.filter((r) => r.date >= today);
-      const skippedPast = targets.length - deletable.length;
-      if (deletable.length === 0) {
-        showToast("지난 예약은 취소할 수 없습니다.");
-        return;
-      }
+      const pastCount = deletable.filter((r) => r.date < today).length;
       let msg = `선택한 ${deletable.length}건의 예약을 취소하시겠습니까?`;
-      if (skippedPast > 0) msg += `\n(지난 예약 ${skippedPast}건은 제외됩니다)`;
+      if (pastCount > 0) msg += `\n(지난 예약 ${pastCount}건이 포함되어 있습니다 — 사용 기록이 삭제됩니다)`;
       if (deletable.some((r) => r.isRecurring)) msg += `\n반복 예약은 선택한 일정만 취소됩니다.`;
       if (!confirm(msg)) return;
       const results = await Promise.all(

@@ -40,7 +40,7 @@ export function SearchView({ me }: { me: Me }) {
     });
   };
 
-  // Delete = 선택 일괄 취소 / Esc = 해제 (지난 예약·타인 예약은 제외)
+  // Delete = 선택 일괄 취소 / Esc = 해제 (타인 예약은 제외, 과거 예약은 안내 후 포함)
   useEffect(() => {
     async function onKey(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement)?.tagName;
@@ -51,17 +51,17 @@ export function SearchView({ me }: { me: Me }) {
       }
       if (e.key !== "Delete" || selectedIds.size === 0 || editing || !results) return;
       const targets = results.filter((r) => selectedIds.has(r.id));
-      const deletable = targets.filter(
-        (r) => r.date >= today && (r.userId === me.id || me.role === "ADMIN")
-      );
+      const deletable = targets.filter((r) => r.userId === me.id || me.role === "ADMIN");
       const skipped = targets.length - deletable.length;
       if (deletable.length === 0) {
-        setToast("취소할 수 있는 예약이 없습니다. (지난 예약·타인 예약 제외)");
+        setToast("취소할 수 있는 본인 예약이 없습니다.");
         window.setTimeout(() => setToast(""), 4000);
         return;
       }
+      const pastCount = deletable.filter((r) => r.date < today).length;
       let msg = `선택한 ${deletable.length}건의 예약을 취소하시겠습니까?`;
-      if (skipped > 0) msg += `\n(지난 예약·타인 예약 ${skipped}건은 제외됩니다)`;
+      if (skipped > 0) msg += `\n(타인 예약 ${skipped}건은 제외됩니다)`;
+      if (pastCount > 0) msg += `\n(지난 예약 ${pastCount}건이 포함되어 있습니다 — 사용 기록이 삭제됩니다)`;
       if (deletable.some((r) => r.isRecurring)) msg += `\n반복 예약은 선택한 일정만 취소됩니다.`;
       if (!confirm(msg)) return;
       const rs = await Promise.all(

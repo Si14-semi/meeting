@@ -5,7 +5,6 @@ import { requireUser, isResponse, jsonError } from "@/lib/api";
 import { kstTodayStr, isValidDateStr } from "@/lib/time";
 import {
   validateSlotShape,
-  validateNotPast,
   findConflicts,
   isOverlapError,
   createReservation,
@@ -46,9 +45,8 @@ async function loadTarget(id: string, user: CurrentUser) {
   if (r.userId !== user.id && user.role !== "ADMIN") {
     return { error: jsonError(403, "본인의 예약만 수정·취소할 수 있습니다.") };
   }
-  if (r.date < kstTodayStr()) {
-    return { error: jsonError(400, "지난 예약은 변경할 수 없습니다.") };
-  }
+  // 과거 예약도 수정/취소 허용 (사용자 확정). 단, 반복 시리즈의 향후/모든 일정 연산은
+  // 아래 boundary 로직에 의해 여전히 오늘 이후에만 적용된다 (과거 이력 대량 소실 방지).
   return { reservation: r };
 }
 
@@ -107,7 +105,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   // ---------- 케이스 1: 반복 규칙 변경 (또는 단건→반복 전환) ----------
   if (p.recurrence !== undefined && p.recurrence !== null) {
     // 대상 범위의 기존 인스턴스를 삭제하고 새 규칙으로 다시 생성한다.
-    const shapeError = validateSlotShape({ startMin: newStart, endMin: newEnd, date: newDate }) ?? validateNotPast(newDate);
+    const shapeError = validateSlotShape({ startMin: newStart, endMin: newEnd, date: newDate });
     if (shapeError) return jsonError(400, shapeError);
     if (p.recurrence.endDate && !isValidDateStr(p.recurrence.endDate)) return jsonError(400, "반복 종료일이 올바르지 않습니다.");
 
@@ -185,7 +183,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   // ---------- 케이스 3: 단건 수정 (scope=one, 비반복, 또는 방금 반복 해제된 예약) ----------
   if (p.scope === "one" || r.seriesId === null || p.recurrence === null) {
-    const shapeError = validateSlotShape({ startMin: newStart, endMin: newEnd, date: newDate }) ?? validateNotPast(newDate);
+    const shapeError = validateSlotShape({ startMin: newStart, endMin: newEnd, date: newDate });
     if (shapeError) return jsonError(400, shapeError);
 
     const timeChanged = newRoomId !== r.roomId || newDate !== r.date || newStart !== r.startMin || newEnd !== r.endMin;

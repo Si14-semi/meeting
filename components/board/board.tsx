@@ -337,11 +337,8 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
     me,
     selectedIds,
     onSelect: handleSelect,
+    // 과거 날짜 예약 생성도 허용 (사용자 확정 — 이력 보정 용도)
     onCreate: (roomId: number, startMin: number, endMin: number) => {
-      if (date < today) {
-        showToast("지난 날짜는 예약할 수 없습니다.", "error");
-        return;
-      }
       setModal({ mode: "create", roomId, date, startMin, endMin });
     },
     onOpen: (r: ReservationDTO) => setModal({ mode: "edit", reservation: r }),

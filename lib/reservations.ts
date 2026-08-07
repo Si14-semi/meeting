@@ -35,12 +35,6 @@ export function validateSlotShape(s: { startMin: number; endMin: number; date: s
   return null;
 }
 
-/** 생성/수정 대상 날짜가 정책상 허용되는지 (오늘 포함 이후만 — 오늘은 지난 시간대도 허용) */
-export function validateNotPast(date: string): string | null {
-  if (date < kstTodayStr()) return "지난 날짜는 예약하거나 변경할 수 없습니다.";
-  return null;
-}
-
 /** 특정 회의실·날짜·시간대와 겹치는 예약 조회 (excludeIds는 수정 시 자기 자신/자기 시리즈 제외용) */
 export async function findConflicts(
   slots: SlotInput[],
@@ -101,8 +95,8 @@ export async function createReservation(params: {
 }): Promise<CreateResult> {
   const { userId, roomId, startMin, endMin, purpose } = params;
 
-  const shapeError =
-    validateSlotShape({ startMin, endMin, date: params.date }) ?? validateNotPast(params.date);
+  // 과거 날짜 생성/변경 허용 (사용자 확정: 유연성 우선 — 이력 보정 용도 포함)
+  const shapeError = validateSlotShape({ startMin, endMin, date: params.date });
   if (shapeError) return { ok: false, status: 400, error: shapeError };
 
   const room = await prisma.room.findUnique({ where: { id: roomId } });
