@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "prisma generate && (prisma migrate deploy || (node -e \"setTimeout(()=>{},8000)\" && prisma migrate deploy)) && next build",
+    "build:onprem": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint"
   },

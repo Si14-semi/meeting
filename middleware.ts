@@ -5,7 +5,7 @@ const SESSION_COOKIE = "meeting_session";
 
 // 로그인 없이 접근 가능한 경로
 const PUBLIC_PATHS = ["/login", "/register"];
-const PUBLIC_API = ["/api/auth/login", "/api/auth/register", "/api/auth/logout", "/api/cron/cleanup"];
+const PUBLIC_API = ["/api/auth/login", "/api/auth/register", "/api/auth/logout", "/api/cron/cleanup", "/api/health"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

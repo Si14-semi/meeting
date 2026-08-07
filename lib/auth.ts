@@ -41,7 +41,9 @@ export async function setSessionCookie(payload: SessionPayload) {
   const store = await cookies();
   store.set(SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    // 사내서버는 HTTP 운영이라 secure 쿠키면 브라우저가 저장을 거부함 → COOKIE_SECURE=false 로 해제
+    // (Vercel은 이 변수를 설정하지 않으므로 기존과 동일하게 secure 유지)
+    secure: process.env.NODE_ENV === "production" && process.env.COOKIE_SECURE !== "false",
     sameSite: "lax",
     path: "/",
     maxAge: SESSION_DAYS * 24 * 60 * 60,
