@@ -103,6 +103,17 @@ $env:PGPASSWORD = "<meeting_app 비밀번호>"
 `deploy.ps1` 이 순서대로: prisma generate → **migrate deploy (테이블 생성)** → 서비스 시작 → `/api/health` 폴링.
 `[deploy] All steps OK` 가 뜨면 성공.
 
+**깨끗한 시작(데이터 이관 없음)이면 초기 시드 1회 실행** — 회의실·공휴일·관리자 계정 생성:
+
+```powershell
+cd D:\Meeting
+npx prisma db seed
+```
+
+> `.env` 에 `ADMIN_EMAIL` / `ADMIN_INITIAL_PASSWORD` 가 있어야 관리자 계정이 만들어집니다.
+> 시드는 멱등(upsert)이라 여러 번 실행해도 안전. 관리자는 최초 로그인 시 비밀번호 변경 강제.
+> (Neon 데이터를 이관하는 경우에는 이 단계 불필요 — 🅓 섹션으로.)
+
 ## 단계 B4 — 동작 확인
 
 - 서버에서: `curl http://localhost:3001/api/health` → `{"status":"ok","db":"ok"}`
@@ -142,6 +153,9 @@ schtasks /Create /TN "Meeting-DB-Backup" /SC DAILY /ST 03:00 /RU SYSTEM `
 
 # 🅓 전환일 — Neon 실데이터 이관 (👤 관리자 PowerShell)
 
+> **⚠ 깨끗한 시작(재가입 방식)으로 결정했다면 이 섹션은 전체 생략** — B3 의 시드 실행으로
+> 끝이며, 아래 🅔 의 "Neon/Vercel 폐기" 만 수행하면 됩니다.
+
 > 직원 공지(예: "금요일 18시 이후 예약 입력 금지, 월요일부터 새 주소 사용") 후,
 > 신규 예약이 없는 시간대에 진행. 소요 수 분.
 
@@ -162,6 +176,21 @@ $env:PGPASSWORD = "<meeting_app 비밀번호>"
 
 > dump 에는 `_prisma_migrations` 테이블도 포함되므로 이후 `deploy.ps1` 의 migrate 단계와
 > 충돌하지 않습니다 (Neon 과 사내 DB 의 migration 이력이 동일해짐).
+
+---
+
+# 🅔-0 Neon / Vercel 폐기 (사내 전환 완료 후)
+
+> 사내서버가 완전히 검증된 뒤에만 진행. 순서 중요.
+
+1. **직원 공지** — 새 주소 `http://<서버IP>:3001` + (재가입 방식이면) "재가입 필요, 기존
+   예약은 이전되지 않음" 안내. 기존 Vercel 주소 차단 일자 명시.
+2. **Vercel 프로젝트 삭제** — 대시보드 → Settings → Delete Project.
+   즉시 삭제가 부담되면 먼저 Deployment Protection 으로 접근 차단 → 1~2주 뒤 삭제.
+3. **Neon 프로젝트 삭제** — 외부에 있던 직원 이메일·비밀번호 해시 등 개인정보 전량 파기
+   완료 지점 (전산담당자 보고용). GitHub 히스토리에 남은 Neon 비밀번호 건도 이때 자연 소멸.
+4. **GitHub 저장소는 유지** (계속 개발·번들 생성에 사용, **private 유지**).
+   `vercel.json` 등 Vercel 설정 파일은 남아 있어도 무해.
 
 ---
 
