@@ -24,6 +24,12 @@ export function kstNowMin(): number {
   return n.getUTCHours() * 60 + n.getUTCMinutes();
 }
 
+/** 시간 범위 표기 — 운영시간 전체(09:00~19:00)면 "종일" */
+export function rangeLabel(startMin: number, endMin: number): string {
+  if (startMin === OPEN_MIN && endMin === CLOSE_MIN) return "종일";
+  return `${minToLabel(startMin)}~${minToLabel(endMin)}`;
+}
+
 /** 480 → "08:00" */
 export function minToLabel(min: number): string {
   const h = Math.floor(min / 60);

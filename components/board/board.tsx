@@ -601,12 +601,10 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
                 <Users size={15} className="text-accent" /> 수용 인원 {infoRoom.capacity}명
               </p>
             )}
-            {infoRoom.description ? (
+            {infoRoom.description && (
               <p className="whitespace-pre-line bg-gray-50 rounded-lg px-3 py-2.5 text-[13px] leading-relaxed">
                 {infoRoom.description}
               </p>
-            ) : (
-              !infoRoom.capacity && <p className="text-gray-400 text-[13px]">등록된 정보가 없습니다.</p>
             )}
           </div>
         </Modal>

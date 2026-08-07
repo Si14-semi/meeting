@@ -19,7 +19,7 @@ import { cn } from "@/components/ui";
 import { reservationColor } from "@/components/board/palette";
 import { useTheme } from "@/components/theme";
 import type { Me, ReservationDTO, Room } from "@/components/board/types";
-import { OPEN_MIN, CLOSE_MIN, SLOT_MIN, SLOTS_PER_DAY, minToLabel } from "@/lib/time";
+import { OPEN_MIN, CLOSE_MIN, SLOT_MIN, SLOTS_PER_DAY, minToLabel, rangeLabel } from "@/lib/time";
 import { roomLabel } from "@/lib/room-label";
 import { Repeat } from "lucide-react";
 
@@ -115,7 +115,6 @@ export function GridHeader({
           </div>
           {tip.room.capacity && <div>수용 인원 {tip.room.capacity}명</div>}
           {tip.room.description && <div className="whitespace-pre-line">{tip.room.description}</div>}
-          {!tip.room.capacity && !tip.room.description && <div>등록된 정보 없음</div>}
         </div>
       )}
     </div>
@@ -572,7 +571,7 @@ function ReservationBlock({
         paddingRight: 6,
         paddingTop: 2,
       }}
-      title={`${minToLabel(r.startMin)}~${minToLabel(r.endMin)} ${r.userName}${r.purpose ? " — " + r.purpose : ""}`}
+      title={`${rangeLabel(r.startMin, r.endMin)} ${r.userName}${r.purpose ? " — " + r.purpose : ""}`}
       onPointerDown={(e) => {
         if (e.pointerType !== "mouse" || e.button !== 0) return;
         e.stopPropagation();
@@ -609,7 +608,7 @@ function ReservationBlock({
         )}
         {slots >= 3 && (
           <span className={cn("block", dense ? "text-[10px]" : "text-[12px]")}>
-            {minToLabel(r.startMin)}~{minToLabel(r.endMin)}
+            {rangeLabel(r.startMin, r.endMin)}
           </span>
         )}
       </div>

@@ -7,7 +7,7 @@
 
 import { cn } from "@/components/ui";
 import type { ReservationDTO } from "@/components/board/types";
-import { minToLabel } from "@/lib/time";
+import { rangeLabel } from "@/lib/time";
 import { roomLabel } from "@/lib/room-label";
 import { DoorOpen, Repeat, SquareArrowOutUpRight } from "lucide-react";
 
@@ -68,7 +68,7 @@ export function ReservationList({
                 </span>
                 <span className="text-[13px] text-gray-500">{r.dateLabel}</span>
                 <span className="text-[13px] font-medium text-gray-700">
-                  {minToLabel(r.startMin)}~{minToLabel(r.endMin)}
+                  {rangeLabel(r.startMin, r.endMin)}
                 </span>
                 {r.isRecurring && (
                   <span className="inline-flex items-center gap-1 text-accent bg-accent-soft rounded-full px-1.5 py-0.5 text-[11px]">

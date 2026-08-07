@@ -4,8 +4,8 @@
 // - 생성: 시간 겹침 시 기존 예약 목록 안내, 반복 부분 충돌 시 "가능한 날짜만 예약" 플로우
 // - 수정: 반복 예약이면 저장/삭제 시 "이 일정 / 이 일정 및 향후 일정 / 모든 일정" 선택
 
-import { useMemo, useState } from "react";
-import { Alert, Button, Input, Label, Modal, Select, Spinner, cn } from "@/components/ui";
+import { useMemo, useRef, useState } from "react";
+import { Alert, Button, Checkbox, Input, Label, Modal, Select, Spinner, cn } from "@/components/ui";
 import { RecurrenceEditor } from "@/components/board/recurrence-editor";
 import { useIsTouch } from "@/components/use-touch";
 import type { ConflictInfo, Me, RecurrenceInput, ReservationDTO, Room } from "@/components/board/types";
@@ -59,6 +59,25 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
   const [date, setDate] = useState(isEdit ? r!.date : state.date);
   const [startLabel, setStartLabel] = useState(minToLabel(isEdit ? r!.startMin : state.startMin));
   const [endLabel, setEndLabel] = useState(minToLabel(isEdit ? r!.endMin : state.endMin));
+  // 종일 = 09:00~19:00 예약 (데이터 구조 동일 — 시간 입력만 잠금)
+  const [allDay, setAllDay] = useState(() => {
+    const s = isEdit ? r!.startMin : state.startMin;
+    const e = isEdit ? r!.endMin : state.endMin;
+    return s === OPEN_MIN && e === CLOSE_MIN;
+  });
+  const prevTimes = useRef<{ start: string; end: string } | null>(null);
+
+  function toggleAllDay(v: boolean) {
+    setAllDay(v);
+    if (v) {
+      prevTimes.current = { start: startLabel, end: endLabel };
+      setStartLabel(minToLabel(OPEN_MIN));
+      setEndLabel(minToLabel(CLOSE_MIN));
+    } else if (prevTimes.current) {
+      setStartLabel(prevTimes.current.start);
+      setEndLabel(prevTimes.current.end);
+    }
+  }
   const [purpose, setPurpose] = useState(isEdit ? r!.purpose : "");
   const [recurrence, setRecurrence] = useState<RecurrenceInput | null>(isEdit ? (r!.series ?? null) : null);
   const [customRec, setCustomRec] = useState(false);
@@ -326,6 +345,12 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
                 className={cn("min-w-0", isTouch && "touch-date")}
               />
             </div>
+            {/* 종일 체크 — 시간 입력을 09:00~19:00으로 고정하고 잠금 */}
+            {!readOnly && (
+              <div className="col-span-2 -my-1 flex justify-end">
+                <Checkbox label="종일 (09:00~19:00)" checked={allDay} onChange={toggleAllDay} />
+              </div>
+            )}
             {/* 시간 입력: 장치 기준 전환 (화면 폭 기준이면 가로 회전 시 네이티브 아이콘이
                 좁은 칸에서 잘리거나 겹침) — 터치=15분 드롭다운 / 마우스=직접 입력 time input */}
             <div className="min-w-0">
@@ -336,7 +361,7 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
                   aria-label="시작 시간"
                   value={startLabel}
                   onChange={(e) => setStartLabel(e.target.value)}
-                  disabled={readOnly}
+                  disabled={readOnly || allDay}
                 >
                   {timeOptions.slice(0, -1).map((t) => (
                     <option key={t} value={t}>
@@ -354,7 +379,7 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
                   list="rv-times"
                   value={startLabel}
                   onChange={(e) => setStartLabel(e.target.value)}
-                  disabled={readOnly}
+                  disabled={readOnly || allDay}
                   className="min-w-0"
                 />
               )}
@@ -367,7 +392,7 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
                   aria-label="종료 시간"
                   value={endLabel}
                   onChange={(e) => setEndLabel(e.target.value)}
-                  disabled={readOnly}
+                  disabled={readOnly || allDay}
                 >
                   {timeOptions.slice(1).map((t) => (
                     <option key={t} value={t}>
@@ -385,7 +410,7 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
                   list="rv-times"
                   value={endLabel}
                   onChange={(e) => setEndLabel(e.target.value)}
-                  disabled={readOnly}
+                  disabled={readOnly || allDay}
                   className="min-w-0"
                 />
               )}
