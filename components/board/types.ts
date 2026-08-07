@@ -1,6 +1,7 @@
 export type Room = {
   id: number;
   number: string;
+  building: string;
   floor: number;
   alias: string | null;
   capacity: number | null;
@@ -11,6 +12,7 @@ export type ReservationDTO = {
   id: string;
   roomId: number;
   roomNumber: string;
+  building: string;
   floor: number;
   date: string;
   dateLabel: string;

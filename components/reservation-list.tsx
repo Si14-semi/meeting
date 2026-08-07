@@ -8,6 +8,7 @@
 import { cn } from "@/components/ui";
 import type { ReservationDTO } from "@/components/board/types";
 import { minToLabel } from "@/lib/time";
+import { roomLabel } from "@/lib/room-label";
 import { DoorOpen, Repeat, SquareArrowOutUpRight } from "lucide-react";
 
 type Props = {
@@ -62,7 +63,9 @@ export function ReservationList({
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-semibold">{r.roomNumber}호</span>
+                <span className="text-sm font-semibold">
+                  {roomLabel({ number: r.roomNumber, building: r.building })}
+                </span>
                 <span className="text-[13px] text-gray-500">{r.dateLabel}</span>
                 <span className="text-[13px] font-medium text-gray-700">
                   {minToLabel(r.startMin)}~{minToLabel(r.endMin)}

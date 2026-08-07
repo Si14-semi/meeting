@@ -8,13 +8,14 @@ export async function GET() {
   if (isResponse(admin)) return admin;
 
   const rooms = await prisma.room.findMany({
-    orderBy: [{ floor: "asc" }, { sortOrder: "asc" }, { number: "asc" }],
+    orderBy: [{ sortOrder: "asc" }, { number: "asc" }],
     include: { _count: { select: { reservations: true } } },
   });
   return NextResponse.json({
     rooms: rooms.map((r) => ({
       id: r.id,
       number: r.number,
+      building: r.building,
       floor: r.floor,
       alias: r.alias,
       capacity: r.capacity,
@@ -28,6 +29,7 @@ export async function GET() {
 
 const createSchema = z.object({
   number: z.string().trim().min(1).max(10),
+  building: z.string().trim().min(1).max(30).default("평화"),
   floor: z.number().int().min(1).max(200),
   alias: z.string().trim().max(30).nullable().default(null),
   capacity: z.number().int().min(1).max(500).nullable().default(null),

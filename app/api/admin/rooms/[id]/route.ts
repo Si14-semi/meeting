@@ -5,6 +5,7 @@ import { requireAdmin, isResponse, jsonError } from "@/lib/api";
 
 const patchSchema = z.object({
   number: z.string().trim().min(1).max(10).optional(),
+  building: z.string().trim().min(1).max(30).optional(),
   floor: z.number().int().min(1).max(200).optional(),
   alias: z.string().trim().max(30).nullable().optional(),
   capacity: z.number().int().min(1).max(500).nullable().optional(),

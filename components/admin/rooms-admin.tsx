@@ -10,6 +10,7 @@ import { Plus, Trash2 } from "lucide-react";
 type AdminRoom = {
   id: number;
   number: string;
+  building: string;
   floor: number;
   alias: string | null;
   capacity: number | null;
@@ -22,7 +23,7 @@ type AdminRoom = {
 export function RoomsAdmin() {
   const [rooms, setRooms] = useState<AdminRoom[]>([]);
   const [error, setError] = useState("");
-  const [newRoom, setNewRoom] = useState({ number: "", floor: "", alias: "", capacity: "", description: "" });
+  const [newRoom, setNewRoom] = useState({ number: "", building: "평화", floor: "", alias: "", capacity: "", description: "" });
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -58,6 +59,7 @@ export function RoomsAdmin() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           number: newRoom.number.trim(),
+          building: newRoom.building.trim() || "평화",
           floor: parseInt(newRoom.floor),
           alias: newRoom.alias.trim() || null,
           capacity: newRoom.capacity ? parseInt(newRoom.capacity) : null,
@@ -68,7 +70,7 @@ export function RoomsAdmin() {
         setError((await res.json()).error ?? "추가에 실패했습니다.");
         return;
       }
-      setNewRoom({ number: "", floor: "", alias: "", capacity: "", description: "" });
+      setNewRoom({ number: "", building: "평화", floor: "", alias: "", capacity: "", description: "" });
       load();
     } finally {
       setBusy(false);
@@ -98,6 +100,12 @@ export function RoomsAdmin() {
             value={newRoom.number}
             onChange={(e) => setNewRoom({ ...newRoom, number: e.target.value })}
             className="w-28"
+          />
+          <Input
+            placeholder="건물 (예: 평화)"
+            value={newRoom.building}
+            onChange={(e) => setNewRoom({ ...newRoom, building: e.target.value })}
+            className="w-32"
           />
           <Input
             placeholder="층"
@@ -156,6 +164,7 @@ function RoomRow({
 }) {
   const [edit, setEdit] = useState({
     number: room.number,
+    building: room.building,
     floor: String(room.floor),
     alias: room.alias ?? "",
     capacity: room.capacity ? String(room.capacity) : "",
@@ -163,6 +172,7 @@ function RoomRow({
   });
   const dirty =
     edit.number !== room.number ||
+    edit.building !== room.building ||
     edit.floor !== String(room.floor) ||
     edit.alias !== (room.alias ?? "") ||
     edit.capacity !== (room.capacity ? String(room.capacity) : "") ||
@@ -175,6 +185,13 @@ function RoomRow({
         onChange={(e) => setEdit({ ...edit, number: e.target.value })}
         className="w-20 h-9"
         aria-label="회의실 번호"
+      />
+      <Input
+        value={edit.building}
+        placeholder="건물"
+        onChange={(e) => setEdit({ ...edit, building: e.target.value })}
+        className="w-24 h-9"
+        aria-label="건물"
       />
       <Input
         value={edit.floor}
@@ -213,6 +230,7 @@ function RoomRow({
           onClick={() =>
             onPatch(room.id, {
               number: edit.number.trim(),
+              building: edit.building.trim() || room.building,
               floor: parseInt(edit.floor) || room.floor,
               alias: edit.alias.trim() || null,
               capacity: edit.capacity ? parseInt(edit.capacity) : null,

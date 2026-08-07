@@ -10,7 +10,8 @@ import { MonthCalendar } from "@/components/board/calendar";
 import { GridHeader, ReservationGrid } from "@/components/board/grid";
 import { ReservationModal, type ModalState } from "@/components/board/reservation-modal";
 import type { ConflictInfo, Holiday, Me, ReservationDTO, Room } from "@/components/board/types";
-import { addDays, formatDateWithWeekday, isValidDateStr, kstTodayStr, minToLabel } from "@/lib/time";
+import { addDays, formatDateWithWeekday, isValidDateStr, kstTodayStr, minToLabel, SLOTS_PER_DAY } from "@/lib/time";
+import { roomLabel } from "@/lib/room-label";
 import { CalendarDays, ChevronLeft, ChevronRight, DoorOpen, Users } from "lucide-react";
 
 type Props = {
@@ -49,9 +50,13 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
     conflicts: ConflictInfo[];
     availableCount: number;
   } | null>(null);
-  const [activeFloorIdx, setActiveFloorIdx] = useState(0);
+  // 건물 탭 (평화/아리랑&신원/차량) + 모바일 세로용 층 분리 탭. 최근 본 화면은 localStorage에 기억.
+  const [view, setView] = useState<{ building: string; floor: number | null } | null>(null);
   // 좁은 화면(모바일 가로 회전 등)에서는 칼럼 최소폭을 없애 8실이 스크롤 없이 들어가게
   const [fitCols, setFitCols] = useState(false);
+  // 데스크톱: 화면 높이에 맞춰 15분 행높이를 동적 계산 → 1080p에서 세로 스크롤 없이 전체 시간대 표시
+  const [deskSlotH, setDeskSlotH] = useState(27);
+  const deskWrapRef = useRef<HTMLDivElement>(null);
   const calRef = useRef<HTMLDivElement>(null);
   const focusScrolled = useRef(false);
   const touchState = useRef<{ x: number; y: number; axis: "none" | "h" | "v" } | null>(null);
@@ -62,6 +67,16 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
   const showToast = useCallback((text: string, kind: "ok" | "error" = "ok") => {
     setToast({ text, kind });
     window.setTimeout(() => setToast(null), 4000);
+  }, []);
+
+  /** 건물/층 뷰 전환 + localStorage 기억 (최근 본 건물이 다음 방문에 먼저 열림) */
+  const applyView = useCallback((building: string, floor: number | null) => {
+    setView({ building, floor });
+    try {
+      localStorage.setItem("meeting.lastView", JSON.stringify({ building, floor }));
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   /** 클릭=단일 선택(재클릭 해제) / Ctrl(Cmd)+클릭=다중 선택 토글 / null=전체 해제 */
@@ -123,15 +138,20 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
     };
   }, []);
 
-  // 내 예약/검색에서 "이동"으로 진입 시 해당 예약으로 스크롤
+  // 내 예약/검색에서 "이동"으로 진입 시 해당 예약의 건물 탭으로 전환 후 스크롤
   useEffect(() => {
-    if (!focusId || focusScrolled.current || reservations.length === 0) return;
+    if (!focusId || focusScrolled.current || reservations.length === 0 || !view) return;
+    const target = reservations.find((r) => r.id === focusId);
+    if (target && target.building !== view.building) {
+      applyView(target.building, target.floor > 1 ? target.floor : null);
+      return; // 뷰 전환 후 다음 렌더에서 스크롤
+    }
     const el = document.getElementById(`res-${focusId}`);
     if (el) {
       focusScrolled.current = true;
       el.scrollIntoView({ behavior: "smooth", block: "center" });
     }
-  }, [focusId, reservations]);
+  }, [focusId, reservations, view, applyView]);
 
   // 달력 팝오버 외부 클릭 닫기
   useEffect(() => {
@@ -167,7 +187,7 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
           setPendingScope("one");
           setPendingError("");
           setPending({ kind: "delete", res });
-        } else if (confirm(`${res.roomNumber}호 ${minToLabel(res.startMin)}~${minToLabel(res.endMin)} 예약을 취소하시겠습니까?`)) {
+        } else if (confirm(`${roomLabel({ number: res.roomNumber, building: res.building })} ${minToLabel(res.startMin)}~${minToLabel(res.endMin)} 예약을 취소하시겠습니까?`)) {
           doDelete(res, "one");
         }
         return;
@@ -208,10 +228,81 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
     else showToast(skipped > 0 ? `본인 예약 ${ok}건만 취소되었습니다.` : `${ok}건의 예약이 취소되었습니다.`);
   }
 
-  const floors = useMemo(() => {
-    const fs = [...new Set(rooms.map((r) => r.floor))].sort((a, b) => a - b);
-    return fs.map((floor) => ({ floor, rooms: rooms.filter((r) => r.floor === floor) }));
+  // 건물 목록 (sortOrder 순 — rooms API가 정렬해서 내려줌)
+  const buildings = useMemo(() => {
+    const seen: string[] = [];
+    for (const r of rooms) if (!seen.includes(r.building)) seen.push(r.building);
+    return seen;
   }, [rooms]);
+
+  /** 모바일 세로 탭: 층이 여러 개인 건물(평화)은 층별로 분리 — 평화12F/평화13F/아리랑&신원/차량 */
+  const portraitTabs = useMemo(() => {
+    const tabs: { building: string; floor: number | null; label: string; rooms: Room[] }[] = [];
+    for (const b of buildings) {
+      const bRooms = rooms.filter((r) => r.building === b);
+      const floors = [...new Set(bRooms.map((r) => r.floor))].sort((x, y) => x - y);
+      if (floors.length > 1) {
+        for (const f of floors) {
+          tabs.push({ building: b, floor: f, label: `${b}${f}F`, rooms: bRooms.filter((r) => r.floor === f) });
+        }
+      } else {
+        tabs.push({ building: b, floor: null, label: b, rooms: bRooms });
+      }
+    }
+    return tabs;
+  }, [buildings, rooms]);
+
+  // 최근 본 건물/탭 복원 (rooms 로드 후 1회)
+  useEffect(() => {
+    if (rooms.length === 0 || view !== null) return;
+    let stored: { building?: string; floor?: number | null } = {};
+    try {
+      stored = JSON.parse(localStorage.getItem("meeting.lastView") ?? "{}");
+    } catch {
+      /* ignore */
+    }
+    const building = buildings.includes(stored.building ?? "") ? stored.building! : buildings[0];
+    const bFloors = [...new Set(rooms.filter((r) => r.building === building).map((r) => r.floor))];
+    const floor =
+      bFloors.length > 1
+        ? (typeof stored.floor === "number" && bFloors.includes(stored.floor) ? stored.floor : Math.min(...bFloors))
+        : null;
+    setView({ building, floor });
+  }, [rooms, buildings, view]);
+
+  function selectBuilding(b: string) {
+    const bFloors = [...new Set(rooms.filter((r) => r.building === b).map((r) => r.floor))].sort((x, y) => x - y);
+    applyView(b, bFloors.length > 1 ? bFloors[0] : null);
+  }
+
+  const activeTabIdx = useMemo(() => {
+    if (!view) return 0;
+    const idx = portraitTabs.findIndex(
+      (t) => t.building === view.building && (t.floor === null || t.floor === view.floor)
+    );
+    return idx >= 0 ? idx : 0;
+  }, [portraitTabs, view]);
+
+  const buildingRooms = useMemo(
+    () => (view ? rooms.filter((r) => r.building === view.building) : []),
+    [rooms, view]
+  );
+
+  // 데스크톱 행높이: 그리드 시작 위치부터 화면 하단까지에 40슬롯이 들어가도록 (16~27px 범위)
+  useEffect(() => {
+    function calc() {
+      const el = deskWrapRef.current;
+      if (!el || el.offsetParent === null) return;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      const HEADER_H = 38; // 그리드 회의실행
+      const BOTTOM_PAD = 18;
+      const avail = window.innerHeight - top - HEADER_H - BOTTOM_PAD;
+      setDeskSlotH(Math.max(16, Math.min(27, Math.floor(avail / SLOTS_PER_DAY))));
+    }
+    calc();
+    window.addEventListener("resize", calc);
+    return () => window.removeEventListener("resize", calc);
+  }, [rooms.length, view]);
 
   /* ----- 서버 호출 ----- */
 
@@ -323,10 +414,9 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
     if (!s || s.axis !== "h") return;
     const dx = e.changedTouches[0].clientX - s.x;
     if (Math.abs(dx) < 50) return;
-    setActiveFloorIdx((idx) => {
-      const next = dx < 0 ? idx + 1 : idx - 1;
-      return Math.max(0, Math.min(floors.length - 1, next));
-    });
+    const next = Math.max(0, Math.min(portraitTabs.length - 1, activeTabIdx + (dx < 0 ? 1 : -1)));
+    const t = portraitTabs[next];
+    if (t) applyView(t.building, t.floor);
   }
 
   const holidayName = holidays.get(date);
@@ -396,46 +486,61 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
             오늘
           </Button>
         </div>
-        <p className="hidden lg:block text-[12px] text-gray-400">
-          클릭=선택 · 더블클릭/드래그=예약 · 예약 더블클릭=수정 · 가장자리 드래그=시간 변경 · Delete=취소
-        </p>
+        {/* 건물 탭 (데스크톱·모바일 가로) — 기존 설명 텍스트 자리 (사용자 확정) */}
+        {view && buildings.length > 1 && (
+          <div className="hidden sm:flex gap-1 bg-gray-100 rounded-xl p-1">
+            {buildings.map((b) => (
+              <button
+                key={b}
+                onClick={() => selectBuilding(b)}
+                className={cn(
+                  "rounded-lg px-3.5 py-1.5 text-sm font-semibold transition-colors cursor-pointer",
+                  b === view.building ? "bg-card text-accent shadow-sm" : "text-gray-500"
+                )}
+              >
+                {b}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {rooms.length === 0 ? (
+      {rooms.length === 0 || !view ? (
         <div className="py-24 text-center text-gray-400 text-sm">회의실 정보를 불러오는 중...</div>
       ) : (
         <>
-          {/* 데스크톱 */}
-          <div className="hidden sm:block">
+          {/* 데스크톱: 활성 건물의 회의실 전체, 화면 높이에 맞춘 행높이 */}
+          <div className="hidden sm:block" ref={deskWrapRef}>
             <ReservationGrid
-              rooms={rooms}
-              slotHeight={27}
+              rooms={buildingRooms}
+              slotHeight={deskSlotH}
               minColWidth={fitCols ? 0 : 110}
               stickyHeader
+              compactText={false}
               {...gridShared}
             />
           </div>
 
-          {/* 모바일: 층별 탭 + 스와이프 */}
+          {/* 모바일 세로: 건물·층 통합 탭 (평화12F/평화13F/아리랑&신원/차량) + 스와이프 */}
           <div className="sm:hidden">
             <div className="flex gap-1 mb-2 bg-gray-100 rounded-xl p-1">
-              {floors.map((f, idx) => (
+              {portraitTabs.map((t, idx) => (
                 <button
-                  key={f.floor}
-                  onClick={() => setActiveFloorIdx(idx)}
+                  key={t.label}
+                  onClick={() => applyView(t.building, t.floor)}
                   className={cn(
-                    "flex-1 rounded-lg py-1.5 text-sm font-semibold transition-colors cursor-pointer",
-                    idx === activeFloorIdx ? "bg-accent text-white shadow-sm" : "text-gray-500"
+                    "flex-1 rounded-lg py-1.5 text-[13px] font-semibold transition-colors cursor-pointer whitespace-nowrap",
+                    idx === activeTabIdx ? "bg-accent text-white shadow-sm" : "text-gray-500"
                   )}
                 >
-                  {f.floor}층
+                  {t.label}
                 </button>
               ))}
             </div>
             {/* 회의실행: 스와이프 영역 밖에 sticky로 고정 (transform과 sticky는 공존 불가) */}
-            {floors[activeFloorIdx] && (
+            {portraitTabs[activeTabIdx] && (
               <div className="sticky top-14 z-30 rounded-t-xl border border-line border-b-line-strong bg-gray-100 overflow-hidden">
-                <GridHeader rooms={floors[activeFloorIdx].rooms} onRoomInfo={setInfoRoom} />
+                <GridHeader rooms={portraitTabs[activeTabIdx].rooms} onRoomInfo={setInfoRoom} />
               </div>
             )}
             <div
@@ -446,16 +551,17 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
             >
               <div
                 className="flex transition-transform duration-300 ease-out"
-                style={{ transform: `translateX(-${activeFloorIdx * 100}%)` }}
+                style={{ transform: `translateX(-${activeTabIdx * 100}%)` }}
               >
-                {floors.map((f) => (
-                  <div key={f.floor} className="w-full shrink-0">
+                {portraitTabs.map((t) => (
+                  <div key={t.label} className="w-full shrink-0">
                     <ReservationGrid
-                      rooms={f.rooms}
+                      rooms={t.rooms}
                       slotHeight={18}
                       minColWidth={0} // 완전 유동폭 — 좁은 폰(360px)에서도 가로 오버플로 없이 화면에 딱 맞게
                       stickyHeader={false}
                       hideHeader
+                      compactText
                       {...gridShared}
                     />
                   </div>
@@ -483,10 +589,11 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
 
       {/* 회의실 정보 모달 */}
       {infoRoom && (
-        <Modal open onClose={() => setInfoRoom(null)} title={`${infoRoom.number}호`} maxWidth="max-w-xs">
+        <Modal open onClose={() => setInfoRoom(null)} title={roomLabel(infoRoom)} maxWidth="max-w-xs">
           <div className="space-y-2.5 text-sm text-gray-700">
             <p className="flex items-center gap-2">
-              <DoorOpen size={15} className="text-accent" /> {infoRoom.floor}층
+              <DoorOpen size={15} className="text-accent" /> {infoRoom.building}
+              {infoRoom.floor > 1 ? ` ${infoRoom.floor}층` : ""}
               {infoRoom.alias ? ` ${infoRoom.alias}` : ""}
             </p>
             {infoRoom.capacity && (
@@ -516,7 +623,7 @@ export function ReservationBoard({ me, initialDate, focusId }: Props) {
           <div className="space-y-4">
             <p className="text-sm text-gray-700">
               {pending.kind === "move"
-                ? `${pending.res.roomNumber}호 예약을 ${minToLabel(pending.patch.startMin)}~${minToLabel(pending.patch.endMin)}으로 변경합니다. 어디에 적용할까요?`
+                ? `${roomLabel({ number: pending.res.roomNumber, building: pending.res.building })} 예약을 ${minToLabel(pending.patch.startMin)}~${minToLabel(pending.patch.endMin)}으로 변경합니다. 어디에 적용할까요?`
                 : "반복 예약을 어떻게 취소할까요?"}
             </p>
             <div className="flex flex-col gap-2">

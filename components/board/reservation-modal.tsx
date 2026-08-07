@@ -10,6 +10,7 @@ import { RecurrenceEditor } from "@/components/board/recurrence-editor";
 import { useIsTouch } from "@/components/use-touch";
 import type { ConflictInfo, Me, RecurrenceInput, ReservationDTO, Room } from "@/components/board/types";
 import { OPEN_MIN, CLOSE_MIN, SLOT_MIN, minToLabel, labelToMin, formatDateWithWeekday, kstTodayStr } from "@/lib/time";
+import { roomLabel } from "@/lib/room-label";
 import { Repeat, Trash2 } from "lucide-react";
 
 export type ModalState =
@@ -301,10 +302,16 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
                 onChange={(e) => setRoomId(parseInt(e.target.value))}
                 disabled={readOnly}
               >
-                {rooms.map((room) => (
-                  <option key={room.id} value={room.id}>
-                    {room.number}호
-                  </option>
+                {[...new Set(rooms.map((rm) => rm.building))].map((b) => (
+                  <optgroup key={b} label={b}>
+                    {rooms
+                      .filter((rm) => rm.building === b)
+                      .map((room) => (
+                        <option key={room.id} value={room.id}>
+                          {roomLabel(room)}
+                        </option>
+                      ))}
+                  </optgroup>
                 ))}
               </Select>
             </div>
@@ -391,7 +398,7 @@ export function ReservationModal({ state, rooms, me, onClose, onSaved }: Props) 
           </div>
 
           <div>
-            <Label htmlFor="rv-purpose">예약 목적 (선택)</Label>
+            <Label htmlFor="rv-purpose">예약 목적</Label>
             <Input
               id="rv-purpose"
               placeholder="예: 주간 회의"

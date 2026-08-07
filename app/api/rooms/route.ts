@@ -8,8 +8,8 @@ export async function GET() {
 
   const rooms = await prisma.room.findMany({
     where: { active: true },
-    orderBy: [{ floor: "asc" }, { sortOrder: "asc" }, { number: "asc" }],
-    select: { id: true, number: true, floor: true, alias: true, capacity: true, description: true },
+    orderBy: [{ sortOrder: "asc" }, { number: "asc" }],
+    select: { id: true, number: true, building: true, floor: true, alias: true, capacity: true, description: true },
   });
   return NextResponse.json({ rooms });
 }

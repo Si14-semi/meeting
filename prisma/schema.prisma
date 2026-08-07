@@ -44,8 +44,9 @@ model User {
 
 model Room {
   id          Int     @id @default(autoincrement())
-  number      String  @unique // 예: "120"
-  floor       Int // 예: 12, 13
+  number      String  @unique // 예: "120", "A1", "6958"(차량)
+  building    String  @default("평화") // 건물/그룹 탭: 평화, 아리랑&신원, 차량
+  floor       Int // 예: 12, 13 (건물에 층 구분이 없으면 1)
   alias       String? // 호칭 (예: "1호") — 회의실 정보에 "12층 1호"로 표시
   capacity    Int?
   description String? // 자유 입력 정보 (장비, 위치 등 — 관리자모드에서 입력)

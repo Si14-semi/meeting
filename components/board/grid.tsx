@@ -20,6 +20,7 @@ import { reservationColor } from "@/components/board/palette";
 import { useTheme } from "@/components/theme";
 import type { Me, ReservationDTO, Room } from "@/components/board/types";
 import { OPEN_MIN, CLOSE_MIN, SLOT_MIN, SLOTS_PER_DAY, minToLabel } from "@/lib/time";
+import { roomLabel } from "@/lib/room-label";
 import { Repeat } from "lucide-react";
 
 const GUTTER_W = 56; // 시간 눈금 열 너비
@@ -95,7 +96,7 @@ export function GridHeader({
               boundaries.includes(i) && "border-l-transparent"
             )}
           >
-            <span className="text-sm font-bold text-gray-800">{room.number}호</span>
+            <span className="text-sm font-bold text-gray-800">{roomLabel(room)}</span>
           </button>
         ))}
         <FloorDividers boundaries={boundaries} count={rooms.length} />
@@ -106,9 +107,11 @@ export function GridHeader({
           className="fixed z-[70] -translate-x-1/2 text-[12px] leading-relaxed rounded-lg border border-line bg-card text-foreground px-3 py-2 w-max max-w-52 text-left shadow-md pointer-events-none"
           style={{ left: tip.x, top: tip.y + 6 }}
         >
-          <div className="font-bold">{tip.room.number}호</div>
+          <div className="font-bold">{roomLabel(tip.room)}</div>
           <div>
-            {tip.room.floor}층{tip.room.alias ? ` ${tip.room.alias}` : ""}
+            {tip.room.building}
+            {tip.room.floor > 1 ? ` ${tip.room.floor}층` : ""}
+            {tip.room.alias ? ` ${tip.room.alias}` : ""}
           </div>
           {tip.room.capacity && <div>수용 인원 {tip.room.capacity}명</div>}
           {tip.room.description && <div className="whitespace-pre-line">{tip.room.description}</div>}
@@ -125,10 +128,11 @@ type Props = {
   rooms: Room[];
   reservations: ReservationDTO[];
   me: Me;
-  slotHeight: number; // 데스크톱 27 / 모바일 18
+  slotHeight: number; // 데스크톱: 화면 높이 맞춤(16~27) / 모바일 18
   minColWidth: number;
   stickyHeader: boolean;
   hideHeader?: boolean; // 모바일: board가 헤더를 밖에서 렌더
+  compactText?: boolean; // 모바일: 박스 글씨를 작게 (데스크톱은 행높이와 무관하게 큰 글씨 유지)
   selectedIds: Set<string>;
   /** id=null → 전체 해제 / additive=true → Ctrl+클릭 다중 선택 토글 */
   onSelect: (id: string | null, additive?: boolean) => void;
@@ -148,6 +152,7 @@ export function ReservationGrid({
   minColWidth,
   stickyHeader,
   hideHeader = false,
+  compactText = false,
   selectedIds,
   onSelect,
   onCreate,
@@ -416,6 +421,7 @@ export function ReservationGrid({
                       key={r.id}
                       r={r}
                       slotHeight={slotHeight}
+                      compactText={compactText}
                       editable={canEdit(r)}
                       mine={r.userId === me.id}
                       selected={selectedIds.has(r.id)}
@@ -508,6 +514,7 @@ export function ReservationGrid({
 function ReservationBlock({
   r,
   slotHeight,
+  compactText,
   editable,
   mine,
   selected,
@@ -518,6 +525,7 @@ function ReservationBlock({
 }: {
   r: ReservationDTO;
   slotHeight: number;
+  compactText: boolean;
   editable: boolean;
   mine: boolean;
   selected: boolean;
@@ -532,7 +540,7 @@ function ReservationBlock({
   const top = ((r.startMin - OPEN_MIN) / SLOT_MIN) * slotHeight;
   const height = ((r.endMin - r.startMin) / SLOT_MIN) * slotHeight;
   const slots = (r.endMin - r.startMin) / SLOT_MIN;
-  const dense = slotHeight < 24; // 모바일은 기존 크기 유지
+  const dense = compactText; // 모바일만 작은 글씨 (데스크톱은 행높이 축소와 무관하게 큰 글씨)
 
   function zoneAt(clientY: number): "move" | "resize-top" | "resize-bottom" {
     const rect = ref.current?.getBoundingClientRect();

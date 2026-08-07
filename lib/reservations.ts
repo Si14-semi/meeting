@@ -183,7 +183,7 @@ export async function createReservation(params: {
 /** 예약 + 예약자 이름 포함 조회 형태 (그리드/목록 공용) */
 export const reservationInclude = {
   user: { select: { id: true, name: true } },
-  room: { select: { id: true, number: true, floor: true } },
+  room: { select: { id: true, number: true, building: true, floor: true } },
   series: true,
 } satisfies Prisma.ReservationInclude;
 
@@ -194,6 +194,7 @@ export function serializeReservation(r: ReservationWithRefs) {
     id: r.id,
     roomId: r.roomId,
     roomNumber: r.room.number,
+    building: r.room.building,
     floor: r.room.floor,
     date: r.date,
     dateLabel: formatDateWithWeekday(r.date),
